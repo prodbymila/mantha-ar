@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Mantha AR</title>
+<style>
+  :root { --crudo:#efe8d8; --tinta:#1a1a1a; --rojo:#c23a4c; }
+  html,body { margin:0; height:100%; background:#000; overflow:hidden; font-family: ui-rounded, "SF Pro Rounded", system-ui, sans-serif; color:var(--tinta); }
+  #ar { position:fixed; inset:0; }
+  #ar video { object-fit:cover; }
+  .ov { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px; text-align:center; z-index:10; }
+  #start { background:var(--crudo); }
+  #start h1 { font-size:44px; margin:0; letter-spacing:1px; font-weight:900; -webkit-text-stroke:1.5px var(--tinta); color:#fff; text-shadow:3px 3px 0 var(--tinta); }
+  #start p { margin:0; max-width:300px; line-height:1.4; }
+  #start img { width:180px; border:3px solid var(--tinta); border-radius:14px; transform:rotate(-3deg); }
+  button { font:inherit; font-weight:800; font-size:20px; padding:14px 30px; border-radius:40px; border:3px solid var(--tinta); background:var(--rojo); color:#fff; box-shadow:4px 4px 0 var(--tinta); }
+  button:active { transform:translate(3px,3px); box-shadow:1px 1px 0 var(--tinta); }
+  #scan { pointer-events:none; display:none; }
+  #scan .frame { width:62vmin; height:62vmin; border:3px dashed rgba(255,255,255,.85); border-radius:24px; display:flex; align-items:center; justify-content:center; }
+  #scan img { width:70%; opacity:.35; border-radius:10px; }
+  #scan .tip { color:#fff; background:rgba(0,0,0,.45); padding:8px 14px; border-radius:20px; font-weight:700; }
+  #card { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,140%); transition:transform .45s cubic-bezier(.2,1.4,.4,1); background:var(--crudo); border:3px solid var(--tinta); border-radius:18px; box-shadow:4px 4px 0 var(--tinta); padding:10px 18px; z-index:11; text-align:center; white-space:nowrap; }
+  #card.on { transform:translate(-50%,0); }
+  #card b { font-size:22px; display:block; }
+  #card span { font-size:14px; }
+  #err { display:none; background:var(--crudo); }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.150.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="ar"></div>
+
+<div id="start" class="ov">
+  <h1>MANTHA AR</h1>
+  <img src="target.jpg" alt="">
+  <p>Apuntá la cámara a la <b>Vespa</b> de la capa y mirá cómo sale de la tela.</p>
+  <button id="go">Abrir cámara</button>
+  <p style="font-size:13px;opacity:.6"><a href="?preview" style="color:inherit">ver el objeto sin cámara</a></p>
+</div>
+
+<div id="scan" class="ov"><div class="frame"><img src="target.jpg" alt=""></div><div class="tip">Buscando la Vespa…</div></div>
+
+<div id="card"><b>Vespa 98</b><span>Piaggio · Italia 1946 · Corradino D'Ascanio</span></div>
+
+<div id="err" class="ov"><p id="errmsg"></p><button onclick="location.reload()">Reintentar</button></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { buildVespa, addLights } from './vespa3d.js';
+
+const $ = (id) => document.getElementById(id);
+const preview = new URLSearchParams(location.search).has('preview');
+
+// animación de "salir de la tela": escala con rebote + flote + giro suave
+function animator(vespa, base) {
+  let t0 = null, visible = false;
+  return {
+    show() { visible = true; t0 = performance.now(); },
+    hide() { visible = false; },
+    tick(now) {
+      const t = t0 ? (now - t0) / 1000 : 0;
+      const k = visible ? Math.min(1, t / 0.9) : 0;
+      const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2); // ease-out con rebote
+      const s = base * (k === 0 ? 0.001 : back(k));
+      vespa.scale.setScalar(s);
+      vespa.rotation.y = Math.sin(now / 1600) * 0.6;
+      vespa.position.y = base * 0.04 * Math.sin(now / 700);
+      for (const w of vespa.children[0].userData.wheels) w.rotation.z -= 0.04;
+    },
+  };
+}
+
+if (preview) {
+  $('start').style.display = 'none';
+  const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+  const r = new THREE.WebGLRenderer({ antialias: true });
+  r.setPixelRatio(devicePixelRatio); r.setSize(innerWidth, innerHeight);
+  r.setClearColor(0xefe8d8); $('ar').appendChild(r.domElement);
+  const scene = new THREE.Scene(); addLights(scene);
+  const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 50);
+  cam.position.set(1.6, 1.1, 3.2);
+  const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.5, 0); ctl.update();
+  const holder = new THREE.Group(); holder.add(buildVespa()); scene.add(holder);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xe2d9c4 }));
+  floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  const a = animator(holder, 1); a.show();
+  $('card').classList.add('on');
+  addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
+  r.setAnimationLoop((now) => { a.tick(now); r.render(scene, cam); });
+} else {
+  $('go').onclick = async () => {
+    $('go').disabled = true; $('go').textContent = 'Cargando…';
+    try {
+      const { MindARThree } = await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
+      const mind = new MindARThree({
+        container: $('ar'), imageTargetSrc: './vespa.mind',
+        uiLoading: 'no', uiScanning: 'no', uiError: 'no',
+        filterMinCF: 0.0001, filterBeta: 0.001, missTolerance: 8, warmupTolerance: 3,
+      });
+      const { renderer, scene, camera } = mind;
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      addLights(scene);
+      const anchor = mind.addAnchor(0);
+
+      // La imagen marcadora mide 1 unidad de ancho. La Vespa pintada está arriba-centro del recorte.
+      // La hacemos salir de la tela: vista de costado como en el dibujo, flotando hacia la cámara.
+      const holder = new THREE.Group();
+      holder.add(buildVespa());
+      holder.position.set(-0.02, 0.05, 0.35);
+      anchor.group.add(holder);
+
+      // sombra suave sobre la tela
+      const sh = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40),
+        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false }));
+      sh.scale.set(1.5, 0.5, 1); sh.position.set(0, -0.12, 0.002); anchor.group.add(sh);
+
+      const a = animator(holder, 0.75);
+      anchor.onTargetFound = () => { a.show(); $('scan').style.display = 'none'; $('card').classList.add('on'); navigator.vibrate?.(30); };
+      anchor.onTargetLost = () => { a.hide(); $('scan').style.display = 'flex'; $('card').classList.remove('on'); };
+
+      await mind.start();
+      $('start').style.display = 'none'; $('scan').style.display = 'flex';
+      renderer.setAnimationLoop((now) => { a.tick(now); renderer.render(scene, camera); });
+    } catch (e) {
+      console.error(e);
+      $('start').style.display = 'none'; $('err').style.display = 'flex';
+      $('errmsg').textContent = 'No pude abrir la cámara. Revisá que el navegador tenga permiso de cámara (Ajustes → Safari → Cámara) y que la página esté en https.';
+    }
+  };
+}
+</script>
+</body>
+</html>
