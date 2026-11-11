@@ -392,3 +392,160 @@ export function buildEspalditas() {
   }
   return root(g);
 }
+
+// ============ CENTRO: azar · artesanía · técnica (Ortega y Gasset) ============
+
+const facet = (geo, color, rough = 0.8) => {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness: rough, flatShading: true })));
+  g.add(new THREE.Mesh(geo, part(new THREE.BoxGeometry(0, 0, 0), 0, 'matte').children[1].material));
+  return g;
+};
+const rnd = (i) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
+
+// Fuego: leños cruzados y llamas que titilan.
+export function buildFuego() {
+  const g = new THREE.Group();
+  for (let i = 0; i < 3; i++) {
+    const log = part(new THREE.CylinderGeometry(0.06, 0.07, 0.6, 14), 0x6b3f22, 'wood');
+    log.rotation.set(Math.PI / 2, i * Math.PI / 3, 0.15); log.position.y = 0.07; g.add(log);
+  }
+  const flames = [];
+  const cols = [0xe0452a, 0xf08a24, 0xf5c542];
+  for (let i = 0; i < 3; i++) {
+    const f = new THREE.Mesh(deform(new THREE.ConeGeometry(0.17 - i * 0.045, 0.5 - i * 0.1, 20, 6), (v) => { v.x += 0.05 * Math.sin(v.y * 9); }),
+      new THREE.MeshBasicMaterial({ color: cols[i], toneMapped: false, transparent: true, opacity: 0.95 - i * 0.05 }));
+    f.position.y = 0.33 - i * 0.03; g.add(f); flames.push(f);
+  }
+  const light = new THREE.PointLight(0xff9a3c, 1.5, 1.5); light.position.y = 0.4; g.add(light);
+  return root(g, (now) => flames.forEach((f, i) => {
+    f.scale.set(1 + 0.08 * Math.sin(now / 90 + i), 1 + 0.15 * Math.sin(now / 130 + i * 2), 1);
+    f.rotation.y = now / 600 * (i % 2 ? 1 : -1); light.intensity = 1.3 + 0.4 * Math.sin(now / 70);
+  }));
+}
+
+// Piedra tallada: núcleo de sílex con facetas.
+export function buildPiedra() {
+  const geo = deform(new THREE.IcosahedronGeometry(0.4, 1), (v) => { const n = rnd(v.x * 13 + v.y * 7 + v.z * 3); v.multiplyScalar(0.85 + 0.25 * n); v.y *= 0.6; });
+  geo.computeVertexNormals();
+  const g = facet(geo, 0x6f7a82); g.position.y = 0.25;
+  return root(g, (now, t) => { g.rotation.y = t * 0.6; });
+}
+
+// Hacha de mano con mango.
+export function buildHacha() {
+  const g = new THREE.Group();
+  g.add(at(part(new THREE.CylinderGeometry(0.035, 0.045, 0.9, 12), 0x8a5a2e, 'wood'), 0, 0.45, 0));
+  const head = facet(deform(new THREE.OctahedronGeometry(0.2, 0), (v) => { v.x *= 1.4; v.z *= 0.45; if (v.x > 0) v.y *= 1.4; }), 0x7d858c);
+  head.position.set(0.12, 0.82, 0); g.add(head);
+  for (let i = 0; i < 4; i++) g.add(at(part(new THREE.TorusGeometry(0.05, 0.012, 6, 16), 0xc9a877, 'matte'), 0, 0.74 + i * 0.03, 0, Math.PI / 2));
+  return root(g, (now, t) => { g.rotation.z = -0.25 + 0.25 * Math.sin(Math.min(t, 1.2) * Math.PI / 1.2); });
+}
+
+// Vasija de barro.
+export function buildVasija() {
+  const pts = [[0, 0], [0.16, 0], [0.24, 0.08], [0.3, 0.22], [0.28, 0.36], [0.18, 0.48], [0.11, 0.56], [0.12, 0.66], [0.15, 0.7], [0.13, 0.72]].map(([x, y]) => new THREE.Vector2(x, y));
+  const g = part(new THREE.LatheGeometry(pts, 48), 0xd9a44a, 'matte');
+  g.children[0].material = new THREE.MeshPhysicalMaterial({ color: 0xd9a44a, roughness: 0.6, clearcoat: 0.2, side: THREE.DoubleSide });
+  const band = part(new THREE.CylinderGeometry(0.302, 0.302, 0.05, 48, 1, true), 0x7a4a22, 'matte'); band.position.y = 0.3; band.children[0].material.side = THREE.DoubleSide;
+  const r = new THREE.Group(); r.add(g); r.add(band);
+  return root(r, (now, t) => { r.rotation.y = t * 0.8; });
+}
+
+// Yunque del herrero sobre un tronco; el martillo golpea y saltan chispas.
+export function buildYunque() {
+  const g = new THREE.Group();
+  g.add(at(part(new THREE.CylinderGeometry(0.2, 0.22, 0.32, 20), 0x8a5a34, 'wood'), 0, 0.16, 0));
+  const s = new THREE.Shape();
+  s.moveTo(-0.32, 0); s.lineTo(0.18, 0); s.quadraticCurveTo(0.42, 0.02, 0.55, 0.06); s.quadraticCurveTo(0.32, 0.1, 0.2, 0.1);
+  s.lineTo(0.12, 0.1); s.lineTo(0.12, -0.1); s.lineTo(0.18, -0.2); s.lineTo(-0.28, -0.2); s.lineTo(-0.22, -0.1); s.lineTo(-0.22, 0.0);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.2, bevelEnabled: true, bevelSize: 0.012, bevelThickness: 0.012, bevelSegments: 2 }); geo.translate(0, 0, -0.1);
+  g.add(at(part(geo, 0x4b5157, 'chrome'), -0.05, 0.53, 0));
+  const ham = new THREE.Group(); ham.position.set(0.35, 0.75, 0.2); g.add(ham);
+  ham.add(at(part(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 10), 0x8a5a2e, 'wood'), 0, 0, 0, 0, 0, Math.PI / 2 - 0.2));
+  ham.add(at(part(rbox(0.08, 0.12, 0.08, 0.01), 0x3a3a3c, 'chrome'), -0.2, 0.04, 0));
+  const sparks = [];
+  for (let i = 0; i < 8; i++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 4), new THREE.MeshBasicMaterial({ color: 0xffc04a, transparent: true })); g.add(p); sparks.push(p); }
+  return root(g, (now, t) => {
+    const ph = (t % 1.1) / 1.1, hit = ph < 0.25 ? ph / 0.25 : Math.max(0, 1 - (ph - 0.25) / 0.6);
+    ham.rotation.z = -0.9 * (1 - hit);
+    sparks.forEach((p, i) => {
+      const k = ph > 0.25 && ph < 0.7 ? (ph - 0.25) / 0.45 : -1;
+      p.visible = k >= 0; if (k < 0) return;
+      const a = i / 8 * Math.PI * 2;
+      p.position.set(0.15 + Math.cos(a) * 0.3 * k, 0.65 + 0.25 * k - 0.4 * k * k, Math.sin(a) * 0.3 * k); p.material.opacity = 1 - k;
+    });
+  });
+}
+
+// Telar manual: bastidor de madera, hilos y un tejido que crece.
+export function buildTelarManual() {
+  const g = new THREE.Group(); const M = 0x7a4a2e;
+  for (const x of [-0.35, 0.35]) g.add(at(part(rbox(0.05, 0.8, 0.05, 0.01), M, 'wood'), x, 0.4, 0));
+  for (const y of [0.15, 0.75]) g.add(at(part(new THREE.CylinderGeometry(0.03, 0.03, 0.74, 12), M, 'wood'), 0, y, 0, 0, 0, Math.PI / 2));
+  for (let i = 0; i < 17; i++) g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.6, 4), mat(0xe8dcc0, 'matte')), -0.3 + i * 0.0375, 0.45, 0));
+  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 1), new THREE.MeshStandardMaterial({ color: 0xb8643e, roughness: 0.9, side: THREE.DoubleSide }));
+  g.add(cloth);
+  const heddle = part(rbox(0.68, 0.03, 0.04, 0.008), M, 'wood'); g.add(heddle);
+  return root(g, (now, t) => {
+    const h = 0.05 + 0.3 * smooth(0.4, 3, t); cloth.scale.y = h; cloth.position.set(0, 0.17 + h / 2, 0.002);
+    heddle.position.set(0, 0.2 + h + 0.03, 0.02 * Math.sin(now / 200));
+  });
+}
+
+// Telar mecánico (Revolución Industrial): bastidor de hierro verde, rodillos y volante que gira.
+export function buildTelarMec() {
+  const g = new THREE.Group(); const V = 0x3f7a5c;
+  for (const z of [-0.25, 0.25]) {
+    const s = new THREE.Shape(); s.moveTo(-0.4, 0); s.lineTo(0.4, 0); s.lineTo(0.35, 0.6); s.lineTo(-0.35, 0.6); s.lineTo(-0.4, 0);
+    s.holes.push(new THREE.Path().absarc(0, 0.3, 0.17, 0, Math.PI * 2, true));
+    const geo = new THREE.ExtrudeGeometry(s, { depth: 0.04, bevelEnabled: false }); geo.translate(0, 0, -0.02);
+    g.add(at(part(geo, V, 'paint'), 0, 0, z));
+  }
+  const rollers = [];
+  for (const [x, y] of [[-0.25, 0.55], [0.25, 0.55], [0, 0.12]]) {
+    const r = part(new THREE.CylinderGeometry(0.05, 0.05, 0.5, 16), x === 0 ? 0xb8643e : 0x7a4a2e, 'wood'); r.rotation.x = Math.PI / 2; r.position.set(x, y, 0); g.add(r); rollers.push(r);
+  }
+  const wheel = new THREE.Group(); wheel.position.set(0, 0.3, 0.3); g.add(wheel);
+  wheel.add(part(new THREE.TorusGeometry(0.16, 0.02, 8, 32), 0x3a3a3c, 'chrome'));
+  for (let i = 0; i < 6; i++) wheel.add(at(part(rbox(0.3, 0.015, 0.015, 0.005), 0x3a3a3c, 'chrome'), 0, 0, 0, 0, 0, i * Math.PI / 6));
+  const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.46, 0.5), new THREE.MeshStandardMaterial({ color: 0xe6dcc6, side: THREE.DoubleSide, roughness: 0.9 }));
+  cloth.rotation.x = -Math.PI / 2 + 0.6; cloth.position.set(0, 0.35, 0); g.add(cloth);
+  return root(g, (now, t, dt) => { wheel.rotation.z -= 2.5 * dt; rollers.forEach((r) => (r.rotation.y += 2 * dt)); });
+}
+
+// Crystal Palace (Joseph Paxton, Londres 1851): hierro y vidrio prefabricados.
+export function buildCrystal() {
+  const g = new THREE.Group();
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d');
+  c.fillStyle = 'rgba(120,190,220,0.55)'; c.fillRect(0, 0, 128, 128); c.strokeStyle = '#1f4f6a'; c.lineWidth = 6;
+  for (let i = 0; i <= 128; i += 32) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, 128); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(128, i); c.stroke(); }
+  const tx = (rx, ry) => { const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.encoding = THREE.sRGBEncoding; return t; };
+  const gl = (rx, ry) => new THREE.MeshStandardMaterial({ map: tx(rx, ry), transparent: true, roughness: 0.15, metalness: 0.3, side: THREE.DoubleSide, depthWrite: false });
+  const nave = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.3, 0.36), gl(12, 3)); nave.position.y = 0.15; g.add(nave);
+  const vault = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.2, 24, 1, true, 0, Math.PI), gl(8, 6));
+  vault.rotation.set(0, 0, Math.PI / 2); vault.position.y = 0.3; g.add(vault);
+  const tr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.7), gl(3, 4)); tr.position.y = 0.21; g.add(tr);
+  const tv = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.7, 24, 1, true, 0, Math.PI), gl(6, 6));
+  tv.rotation.set(Math.PI / 2, Math.PI / 2, 0); tv.position.y = 0.42; g.add(tv);
+  g.add(at(part(rbox(1.26, 0.03, 0.76, 0.01), 0xd9d6cc, 'matte'), 0, 0.015, 0));
+  for (const o of [nave, tr]) { const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry), new THREE.LineBasicMaterial({ color: 0x163a50 })); e.position.copy(o.position); g.add(e); }
+  return root(g);
+}
+
+// Lamparita incandescente (Edison, 1879): se enciende el filamento.
+export function buildFoco() {
+  const g = new THREE.Group();
+  const pts = [[0, 0.95], [0.12, 0.93], [0.25, 0.85], [0.32, 0.7], [0.3, 0.55], [0.2, 0.42], [0.13, 0.33], [0.12, 0.27]].map(([x, y]) => new THREE.Vector2(x, y));
+  const glass = new THREE.Mesh(new THREE.LatheGeometry(pts, 48), new THREE.MeshPhysicalMaterial({ color: 0xdff0f5, roughness: 0.05, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false }));
+  g.add(glass);
+  const base = part(deform(new THREE.CylinderGeometry(0.12, 0.1, 0.2, 32, 8), (v) => { v.x *= 1 + 0.06 * Math.sin(v.y * 90); v.z *= 1 + 0.06 * Math.sin(v.y * 90); }), GRIS, 'chrome');
+  base.position.y = 0.17; g.add(base);
+  g.add(at(part(new THREE.CylinderGeometry(0.05, 0.03, 0.06, 16), NEGRO, 'matte'), 0, 0.04, 0));
+  const filMat = new THREE.MeshStandardMaterial({ color: 0x5a3a20, emissive: 0xffb347, emissiveIntensity: 0 });
+  for (const s of [-1, 1]) g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.32, 6), mat(GRIS, 'chrome')), s * 0.05, 0.45, 0));
+  const fil = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V(-0.05, 0.6, 0), V(-0.03, 0.68, 0), V(0, 0.62, 0), V(0.03, 0.68, 0), V(0.05, 0.6, 0)]), 30, 0.006, 6), filMat);
+  g.add(fil);
+  const light = new THREE.PointLight(0xffc56b, 0, 1.6); light.position.y = 0.65; g.add(light);
+  return root(g, (now, t) => { const k = smooth(0.7, 1.4, t) * (0.95 + 0.05 * Math.sin(now / 60)); filMat.emissiveIntensity = 2.5 * k; light.intensity = 1.6 * k; glass.material.emissive?.setHex(0); });
+}

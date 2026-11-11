@@ -54,7 +54,7 @@
 import * as THREE from 'three';
 import { buildVespa, setupRenderer } from './vespa3d.js?v=5';
 import { buildSK4 } from './sk4.js?v=5';
-import * as O from './objetos.js?v=5';
+import * as O from './objetos.js?v=6';
 
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
@@ -81,12 +81,22 @@ const OBJETOS = {
   gba:        { build: O.buildGBA, title: 'Game Boy Advance', sub: 'Nintendo 2001', tilt: 0.1 },
   r12:        { build: O.buildR12, title: 'Renault 12', sub: 'Gaston Juchet 1969 · IKA-Renault Córdoba 1971–94', tilt: 0.15, sway: 0.55 },
   espalditas: { build: O.buildEspalditas, title: 'Espalditas', sub: 'Diana Cabeza 2017 · Planetario de Buenos Aires', tilt: 0.3 },
+  // centro: las tres etapas de la técnica de Ortega y Gasset
+  fuego:      { build: O.buildFuego, title: 'Fuego', sub: 'Técnica del azar', tilt: 0.3 },
+  piedra:     { build: O.buildPiedra, title: 'Piedra tallada', sub: 'Técnica del azar', tilt: 0.4 },
+  hacha:      { build: O.buildHacha, title: 'Hacha de mano', sub: 'Técnica del azar', tilt: 0.2 },
+  vasija:     { build: O.buildVasija, title: 'Vasija de barro', sub: 'Técnica del artesano', tilt: 0.2 },
+  yunque:     { build: O.buildYunque, title: 'Yunque del herrero', sub: 'Técnica del artesano', tilt: 0.3 },
+  telarm:     { build: O.buildTelarManual, title: 'Telar manual', sub: 'Técnica del artesano', tilt: 0.15 },
+  telarmec:   { build: O.buildTelarMec, title: 'Telar mecánico', sub: 'Técnica del técnico · Revolución Industrial', tilt: 0.3 },
+  crystal:    { build: O.buildCrystal, title: 'Crystal Palace', sub: 'Londres 1851 · Joseph Paxton', tilt: 0.45 },
+  foco:       { build: O.buildFoco, title: 'Lamparita incandescente', sub: 'Edison 1879 · Técnica del técnico', tilt: 0.1 },
 };
 
 // Zonas = marcadores (orden de zonas.mind). capa.json tiene, en píxeles de la foto de la capa extendida,
 // el rectángulo de cada zona y la caja de cada dibujo. Cada zona muestra los dibujos que caen en ella
 // o cerca (aunque se salgan del recorte): así da igual qué zona reconozca la cámara.
-const CAPA = await (await fetch('./capa.json?v=5')).json();
+const CAPA = await (await fetch('./capa.json?v=6')).json();
 const MARGEN = 260;
 const ZONAS = CAPA.zonas.map(([id, x0, y0, x1, y1]) => {
   const W = x1 - x0, cx0 = (x0 + x1) / 2, cy0 = (y0 + y1) / 2;
@@ -266,7 +276,7 @@ if (qs.has('preview')) {
     try {
       const { MindARThree } = await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
       const mind = new MindARThree({
-        container: $('ar'), imageTargetSrc: './zonas.mind?v=5', maxTrack: 1,
+        container: $('ar'), imageTargetSrc: './zonas.mind?v=6', maxTrack: 1,
         uiLoading: 'no', uiScanning: 'no', uiError: 'no',
         filterMinCF: 0.0001, filterBeta: 0.001, missTolerance: 10, warmupTolerance: 3,
       });
