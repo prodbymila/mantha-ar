@@ -13,12 +13,13 @@
   #start { background:var(--crudo); }
   #start h1 { font-size:44px; margin:0; letter-spacing:1px; font-weight:900; -webkit-text-stroke:1.5px var(--tinta); color:#fff; text-shadow:3px 3px 0 var(--tinta); }
   #start p { margin:0; max-width:300px; line-height:1.4; }
-  #start img { width:180px; border:3px solid var(--tinta); border-radius:14px; transform:rotate(-3deg); }
+  .thumbs { display:flex; gap:12px; }
+  .thumbs img { width:130px; border:3px solid var(--tinta); border-radius:14px; transform:rotate(-3deg); }
+  .thumbs img + img { transform:rotate(3deg); }
   button { font:inherit; font-weight:800; font-size:20px; padding:14px 30px; border-radius:40px; border:3px solid var(--tinta); background:var(--rojo); color:#fff; box-shadow:4px 4px 0 var(--tinta); }
   button:active { transform:translate(3px,3px); box-shadow:1px 1px 0 var(--tinta); }
   #scan { pointer-events:none; display:none; }
   #scan .frame { width:62vmin; height:62vmin; border:3px dashed rgba(255,255,255,.85); border-radius:24px; display:flex; align-items:center; justify-content:center; }
-  #scan img { width:70%; opacity:.35; border-radius:10px; }
   #scan .tip { color:#fff; background:rgba(0,0,0,.45); padding:8px 14px; border-radius:20px; font-weight:700; }
   #card { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,140%); transition:transform .45s cubic-bezier(.2,1.4,.4,1); background:var(--crudo); border:3px solid var(--tinta); border-radius:18px; box-shadow:4px 4px 0 var(--tinta); padding:10px 18px; z-index:11; text-align:center; white-space:nowrap; }
   #card.on { transform:translate(-50%,0); }
@@ -38,95 +39,109 @@
 
 <div id="start" class="ov">
   <h1>MANTHA AR</h1>
-  <img src="target.jpg" alt="">
-  <p>Apuntá la cámara a la <b>Vespa</b> de la capa y mirá cómo sale de la tela.</p>
+  <div class="thumbs"><img src="target_vespa.jpg" alt=""><img src="target_sk4.jpg" alt=""></div>
+  <p>Apuntá la cámara a la <b>Vespa</b> o al <b>Braun SK4</b> de la capa y mirá cómo salen de la tela.</p>
   <button id="go">Abrir cámara</button>
-  <p style="font-size:13px;opacity:.6"><a href="?preview" style="color:inherit">ver el objeto sin cámara</a></p>
+  <p style="font-size:13px;opacity:.6">ver sin cámara: <a href="?preview=vespa" style="color:inherit">Vespa</a> · <a href="?preview=sk4" style="color:inherit">SK4</a></p>
 </div>
 
-<div id="scan" class="ov"><div class="frame"><img src="target.jpg" alt=""></div><div class="tip">Buscando la Vespa…</div></div>
+<div id="scan" class="ov"><div class="frame"></div><div class="tip">Apuntá a la Vespa o al SK4…</div></div>
 
-<div id="card"><b>Vespa 98</b><span>Piaggio · Italia 1946 · Corradino D'Ascanio</span></div>
+<div id="card"><b id="ct"></b><span id="cs"></span></div>
 
 <div id="err" class="ov"><p id="errmsg"></p><button onclick="location.reload()">Reintentar</button></div>
 
 <script type="module">
 import * as THREE from 'three';
 import { buildVespa, setupRenderer } from './vespa3d.js';
+import { buildSK4 } from './sk4.js';
 
 const $ = (id) => document.getElementById(id);
-const preview = new URLSearchParams(location.search).has('preview');
+const qs = new URLSearchParams(location.search);
 
-// animación de "salir de la tela": escala con rebote + flote + giro suave
-function animator(vespa, base) {
-  let t0 = null, visible = false;
+// Cada objeto: su marcador (mismo orden que en targets.mind), dónde está el dibujo dentro del
+// marcador (la imagen mide 1 de ancho, centro = 0,0) y cómo sale de la tela.
+const OBJETOS = [
+  { id: 'vespa', build: buildVespa, title: 'Vespa 98', sub: "Piaggio · Italia 1946 · Corradino D'Ascanio",
+    pos: [-0.06, 0.12, 0.35], tilt: 0, scale: 0.62, sway: 0.55, shadow: [0.45, -0.1] },
+  { id: 'sk4', build: buildSK4, title: 'Braun SK4', sub: 'Alemania 1956 · Dieter Rams y Hans Gugelot',
+    pos: [-0.2, -0.02, 0.3], tilt: 0.55, scale: 0.58, sway: 0.35, shadow: [0.4, -0.12] },
+];
+
+function showCard(o, on) {
+  if (on) { $('ct').textContent = o.title; $('cs').textContent = o.sub; }
+  $('card').classList.toggle('on', on);
+}
+
+// holder (posición e inclinación) → spin (escala, vaivén, flote) → modelo
+function mount(o) {
+  const holder = new THREE.Group(), spin = new THREE.Group(), model = o.build();
+  holder.rotation.x = o.tilt; spin.add(model); holder.add(spin);
+  let t0 = null, visible = false, last = performance.now();
+  const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2); // ease-out con rebote
   return {
-    show() { visible = true; t0 = performance.now(); },
+    holder,
+    show() { visible = true; t0 = performance.now(); model.userData.reset?.(); },
     hide() { visible = false; },
-    tick(now) {
+    tick(now, base) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
       const t = t0 ? (now - t0) / 1000 : 0;
       const k = visible ? Math.min(1, t / 0.9) : 0;
-      const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2); // ease-out con rebote
-      const s = base * (k === 0 ? 0.001 : back(k));
-      vespa.scale.setScalar(s);
-      vespa.rotation.y = Math.sin(now / 2200) * 0.55;
-      vespa.position.y = base * 0.04 * Math.sin(now / 700);
-      for (const w of vespa.children[0].userData.wheels) w.rotation.z -= 0.04;
+      spin.scale.setScalar(base * (k === 0 ? 0.001 : back(k)));
+      spin.rotation.y = Math.sin(now / 2200) * o.sway;
+      spin.position.y = base * 0.04 * Math.sin(now / 700);
+      if (visible) model.userData.update?.(now, t, dt);
     },
   };
 }
 
-if (preview) {
+if (qs.has('preview')) {
   $('start').style.display = 'none';
+  const o = OBJETOS.find((x) => x.id === qs.get('preview')) || OBJETOS[0];
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const r = new THREE.WebGLRenderer({ antialias: true });
   r.setPixelRatio(devicePixelRatio); r.setSize(innerWidth, innerHeight);
   r.setClearColor(0xefe8d8); $('ar').appendChild(r.domElement);
   const scene = new THREE.Scene(); setupRenderer(r, scene);
   const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 50);
-  cam.position.set(1.6, 1.1, 3.2);
-  const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.5, 0); ctl.update(); window._view = { cam, ctl };
-  const holder = new THREE.Group(); holder.add(buildVespa()); scene.add(holder);
+  cam.position.set(1.6, 1.3, 3.2);
+  const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.4, 0); ctl.update(); window._view = { cam, ctl };
+  const m = mount({ ...o, tilt: 0 }); scene.add(m.holder); m.show();
   const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xe2d9c4 }));
   floor.rotation.x = -Math.PI / 2; floor.position.y = -0.035; scene.add(floor);
-  const a = animator(holder, 1); a.show();
-  $('card').classList.add('on');
+  showCard(o, true);
   addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
-  r.setAnimationLoop((now) => { a.tick(now); r.render(scene, cam); });
+  r.setAnimationLoop((now) => { m.tick(now, 1); r.render(scene, cam); });
 } else {
   $('go').onclick = async () => {
     $('go').disabled = true; $('go').textContent = 'Cargando…';
     try {
       const { MindARThree } = await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
       const mind = new MindARThree({
-        container: $('ar'), imageTargetSrc: './vespa.mind',
+        container: $('ar'), imageTargetSrc: './targets.mind', maxTrack: 1,
         uiLoading: 'no', uiScanning: 'no', uiError: 'no',
         filterMinCF: 0.0001, filterBeta: 0.001, missTolerance: 8, warmupTolerance: 3,
       });
       const { renderer, scene, camera } = mind;
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       setupRenderer(renderer, scene);
-      const anchor = mind.addAnchor(0);
 
-      // La imagen marcadora mide 1 unidad de ancho. La Vespa pintada está arriba-centro del recorte.
-      // La hacemos salir de la tela: vista de costado como en el dibujo, flotando hacia la cámara.
-      const holder = new THREE.Group();
-      holder.add(buildVespa());
-      holder.position.set(-0.02, 0.05, 0.35);
-      anchor.group.add(holder);
-
-      // sombra suave sobre la tela
-      const sh = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40),
-        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false }));
-      sh.scale.set(1.5, 0.5, 1); sh.position.set(0, -0.12, 0.002); anchor.group.add(sh);
-
-      const a = animator(holder, 0.62);
-      anchor.onTargetFound = () => { a.show(); $('scan').style.display = 'none'; $('card').classList.add('on'); navigator.vibrate?.(30); };
-      anchor.onTargetLost = () => { a.hide(); $('scan').style.display = 'flex'; $('card').classList.remove('on'); };
+      const mounted = OBJETOS.map((o, i) => {
+        const anchor = mind.addAnchor(i), m = mount(o);
+        m.holder.position.set(...o.pos);
+        anchor.group.add(m.holder);
+        // sombra suave sobre la tela
+        const sh = new THREE.Mesh(new THREE.CircleGeometry(o.shadow[0], 40),
+          new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false }));
+        sh.scale.set(1.4, 0.5, 1); sh.position.set(o.pos[0], o.pos[1] + o.shadow[1], 0.002); anchor.group.add(sh);
+        anchor.onTargetFound = () => { m.show(); $('scan').style.display = 'none'; showCard(o, true); navigator.vibrate?.(30); };
+        anchor.onTargetLost = () => { m.hide(); $('scan').style.display = 'flex'; showCard(o, false); };
+        return m;
+      });
 
       await mind.start();
       $('start').style.display = 'none'; $('scan').style.display = 'flex';
-      renderer.setAnimationLoop((now) => { a.tick(now); renderer.render(scene, camera); });
+      renderer.setAnimationLoop((now) => { for (let i = 0; i < mounted.length; i++) mounted[i].tick(now, OBJETOS[i].scale); renderer.render(scene, camera); });
     } catch (e) {
       console.error(e);
       $('start').style.display = 'none'; $('err').style.display = 'flex';

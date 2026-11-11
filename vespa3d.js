@@ -9,7 +9,7 @@ THREE.ColorManagement.legacyMode = false;
 const ROJO = 0xa81c31, CREMA = 0xf1e9d6, GRIS = 0xb9b6b0, OSCURO = 0x3a3a3c, NEGRO = 0x161616;
 
 const mats = {};
-function mat(color, kind = 'paint') {
+export function mat(color, kind = 'paint') {
   const k = color + kind;
   if (!mats[k]) {
     mats[k] = new THREE.MeshPhysicalMaterial(
@@ -30,16 +30,16 @@ const outlineMat = new THREE.ShaderMaterial({
   side: THREE.BackSide,
 });
 
-function part(geo, color, kind, { outline = true } = {}) {
+export function part(geo, color, kind, { outline = true } = {}) {
   const g = new THREE.Group();
   g.add(new THREE.Mesh(geo, mat(color, kind)));
   if (outline) g.add(new THREE.Mesh(geo, outlineMat));
   return g;
 }
 
-const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+export const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
-function deform(geo, fn) {
+export function deform(geo, fn) {
   const p = geo.attributes.position, v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); fn(v); p.setXYZ(i, v.x, v.y, v.z); }
   geo.computeVertexNormals();
@@ -206,6 +206,7 @@ export function buildVespa() {
   v.position.set(0.12, 0, 0);
   const root = new THREE.Group(); root.add(v);
   root.userData.wheels = [fw, rw];
+  root.userData.update = (now, t, dt) => { for (const w of [fw, rw]) w.rotation.z -= 2.4 * dt; };
   return root;
 }
 
