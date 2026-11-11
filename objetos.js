@@ -306,133 +306,9 @@ function bumper(g, x, y, w, depth = 0.025) {
   g.add(at(part(new THREE.CapsuleGeometry(0.018, w, 4, 12), GRIS, 'chrome'), x, y, 0, Math.PI / 2, 0, 0));
 }
 
-// Mazda R360 Coupé (1960): 2,98 m × 1,29 m × 1,29 m. Kei car de motor trasero, faros redondos en las aletas,
-// luneta envolvente, tomas de aire detrás de las puertas.
-export function buildR360() {
-  const C = 0x8db3d9, g = new THREE.Group();
-  const geo = loftGeo({
-    x0: -0.5, x1: 0.5, p: 0.42,
-    top: [[-0.5, 0.2], [-0.48, 0.32], [-0.42, 0.37], [-0.3, 0.42], [-0.18, 0.56], [-0.08, 0.62], [0.06, 0.62], [0.16, 0.57], [0.24, 0.43], [0.36, 0.39], [0.46, 0.35], [0.5, 0.22]],
-    bot: [[-0.5, 0.2], [-0.47, 0.1], [-0.35, 0.08], [0.35, 0.08], [0.47, 0.1], [0.5, 0.22]],
-    wid: [[-0.5, 0.12], [-0.45, 0.2], [-0.3, 0.215], [0.3, 0.215], [0.45, 0.2], [0.5, 0.12]],
-  });
-  g.add(bodyPart(geo, C, { belt: 0.44, top: 0.585, xa: -0.27, xb: 0.215, pillars: [-0.1], pw: 0.018 }));
-  for (const s of [-1, 1]) {
-    lamp(g, 0.475, 0.31, s * 0.135, 0.04);
-    g.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.018, 12, 8), mat(0xe2402e, 'glow')), -0.49, 0.3, s * 0.14));
-    for (let i = 0; i < 4; i++) g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.01), mat(OSCURO, 'matte')), -0.3, 0.33 + i * 0.018, s * 0.212));
-  }
-  bumper(g, 0.5, 0.17, 0.36); bumper(g, -0.5, 0.17, 0.36);
-  g.add(at(part(rbox(0.01, 0.035, 0.12, 0.008), GRIS, 'chrome'), 0.505, 0.26, 0));
-  const ws = wheelsAt(g, [-0.3, 0.3], 0.085, 0.19, 0.06);
-  return root(g, spinAll(ws));
-}
 
-// Renault 12 (Gaston Juchet, 1969; IKA-Renault Córdoba 1971–94): sedán de 3 volúmenes, 4,35 × 1,62 × 1,43 m,
-// faros rectangulares a los lados de la parrilla, cola con baúl.
-export function buildR12() {
-  const C = 0x7b8530, g = new THREE.Group();
-  const geo = loftGeo({
-    x0: -0.55, x1: 0.55, p: 0.32,
-    top: [[-0.55, 0.22], [-0.53, 0.38], [-0.4, 0.41], [-0.3, 0.42], [-0.18, 0.58], [-0.12, 0.6], [0.06, 0.6], [0.18, 0.43], [0.3, 0.39], [0.5, 0.36], [0.55, 0.24]],
-    bot: [[-0.55, 0.22], [-0.53, 0.11], [0.53, 0.11], [0.55, 0.24]],
-    wid: [[-0.55, 0.17], [-0.5, 0.2], [0.5, 0.2], [0.55, 0.17]],
-  });
-  g.add(bodyPart(geo, C, { belt: 0.43, top: 0.57, xa: -0.3, xb: 0.175, pillars: [-0.06], pw: 0.016 }));
-  for (const s of [-1, 1]) {
-    g.add(at(part(rbox(0.012, 0.05, 0.08, 0.008), 0xfff1b8, 'glow', { outline: false }), 0.553, 0.3, s * 0.12));
-    g.add(at(part(rbox(0.012, 0.04, 0.07, 0.008), 0xe2402e, 'glow', { outline: false }), -0.553, 0.32, s * 0.13));
-  }
-  g.add(at(part(rbox(0.012, 0.04, 0.15, 0.006), OSCURO, 'matte', { outline: false }), 0.553, 0.3, 0));
-  g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.013, 0.025, 0.03), mat(GRIS, 'chrome')), 0.556, 0.3, 0));
-  bumper(g, 0.56, 0.2, 0.38); bumper(g, -0.56, 0.2, 0.38);
-  const ws = wheelsAt(g, [-0.34, 0.34], 0.1, 0.18, 0.07);
-  const puffs = [];
-  for (let i = 0; i < 4; i++) {
-    const p = new THREE.Mesh(new THREE.SphereGeometry(0.06, 16, 12), new THREE.MeshStandardMaterial({ color: 0xd9b56a, transparent: true, opacity: 0.8, roughness: 1 }));
-    g.add(p); puffs.push(p);
-  }
-  return root(g, (now, t, dt) => {
-    spinAll(ws)(now, t, dt);
-    puffs.forEach((p, i) => {
-      const ph = ((now / 1000 + i * 0.4) % 1.6) / 1.6;
-      p.position.set(-0.6 - ph * 0.3, 0.14 + ph * 0.22, 0.12); p.scale.setScalar(0.5 + ph * 1.4); p.material.opacity = 0.75 * (1 - ph);
-    });
-  });
-}
 
-// Rastrojero (IAME, Córdoba 1952): pick-up utilitario; cabina redondeada, capot angosto entre guardabarros
-// sueltos, parrilla de barras verticales y faros sobre los guardabarros, caja de carga atrás.
-export function buildRastrojero() {
-  const C = 0x5b8a3c, g = new THREE.Group(), wR = 0.1;
-  // cabina
-  g.add(bodyPart(loftGeo({
-    x0: -0.08, x1: 0.24, p: 0.35,
-    top: [[-0.08, 0.3], [-0.07, 0.6], [0.0, 0.66], [0.16, 0.66], [0.2, 0.6], [0.24, 0.42]],
-    bot: [[-0.08, 0.3], [-0.07, 0.15], [0.24, 0.15]],
-    wid: [[-0.08, 0.18], [-0.06, 0.22], [0.22, 0.22], [0.24, 0.2]],
-  }), C, { belt: 0.47, top: 0.625, xa: -0.06, xb: 0.235, pillars: [0.15], pw: 0.016 }));
-  // capot (angosto, redondeado)
-  g.add(bodyPart(loftGeo({
-    x0: 0.22, x1: 0.56, p: 0.45,
-    top: [[0.22, 0.42], [0.3, 0.43], [0.5, 0.41], [0.56, 0.36]],
-    bot: [[0.22, 0.2], [0.56, 0.2]],
-    wid: [[0.22, 0.13], [0.5, 0.12], [0.56, 0.1]],
-  }), C));
-  // guardabarros delanteros sueltos + estribo
-  for (const s of [-1, 1]) {
-    const f = bodyPart(loftGeo({
-      x0: 0.22, x1: 0.6, p: 0.6,
-      top: [[0.22, 0.2], [0.3, 0.3], [0.42, 0.34], [0.54, 0.3], [0.6, 0.2]],
-      bot: [[0.22, 0.17], [0.42, 0.24], [0.6, 0.17]],
-      wid: [[0.22, 0.04], [0.3, 0.07], [0.54, 0.07], [0.6, 0.04]],
-    }), C); f.position.z = s * 0.2; g.add(f);
-    lamp(g, 0.53, 0.35, s * 0.2, 0.035);
-    g.add(at(part(rbox(0.56, 0.015, 0.06, 0.005), OSCURO, 'matte'), 0.05, 0.16, s * 0.24));
-  }
-  for (let i = 0; i < 7; i++) g.add(at(part(rbox(0.01, 0.15, 0.012, 0.004), GRIS, 'chrome', { outline: false }), 0.563, 0.29, -0.075 + i * 0.025));
-  // caja de carga
-  g.add(at(part(rbox(0.6, 0.04, 0.46, 0.01), C), -0.4, 0.22, 0));
-  for (const s of [-1, 1]) g.add(at(part(rbox(0.6, 0.2, 0.025, 0.008), C), -0.4, 0.33, s * 0.22));
-  g.add(at(part(rbox(0.025, 0.2, 0.46, 0.008), C), -0.7, 0.33, 0));
-  g.add(at(part(rbox(0.025, 0.2, 0.46, 0.008), C), -0.1, 0.33, 0));
-  for (const s of [-1, 1]) g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.03, 0.04), mat(0xe2402e, 'glow')), -0.715, 0.3, s * 0.18));
-  bumper(g, 0.6, 0.15, 0.42);
-  const ws = wheelsAt(g, [-0.42, 0.42], wR, 0.205, 0.08);
-  return root(g, spinAll(ws));
-}
 
-// IKA Estanciera (Córdoba 1957, versión del Willys Jeep Station Wagon): carrocería alta y recta, techo blanco,
-// trompa en V con barras verticales, guardabarros planos, tres ventanillas por lado.
-export function buildEstanciera() {
-  const C = 0xe5c23d, g = new THREE.Group(), wR = 0.11;
-  const body = part(rbox(0.82, 0.38, 0.46, 0.035, 4), C); body.position.set(-0.13, 0.42, 0); g.add(body);
-  g.add(at(part(rbox(0.84, 0.035, 0.47, 0.015), BLANCO), -0.13, 0.62, 0));
-  const gm = glassMat();
-  for (const s of [-1, 1]) {
-    for (const [x, w] of [[-0.44, 0.17], [-0.23, 0.2], [0.0, 0.18]]) g.add(at(new THREE.Mesh(rbox(w, 0.13, 0.008, 0.012), gm), x, 0.52, s * 0.232));
-    g.add(at(part(rbox(0.8, 0.012, 0.01, 0.004), OSCURO, 'matte', { outline: false }), -0.13, 0.34, s * 0.232));
-  }
-  g.add(at(new THREE.Mesh(rbox(0.01, 0.13, 0.38, 0.012), gm), 0.282, 0.52, 0, 0, 0, 0.08));
-  g.add(at(new THREE.Mesh(rbox(0.01, 0.12, 0.3, 0.012), gm), -0.542, 0.52, 0));
-  // capot y guardabarros planos
-  g.add(at(part(rbox(0.3, 0.17, 0.3, 0.025), C), 0.43, 0.33, 0));
-  for (const s of [-1, 1]) {
-    g.add(at(part(rbox(0.3, 0.05, 0.1, 0.012), C), 0.45, 0.27, s * 0.19));
-    g.add(at(part(rbox(0.06, 0.09, 0.1, 0.012), C), 0.57, 0.23, s * 0.19));
-  }
-  // trompa en V con barras verticales
-  for (const s of [-1, 1]) {
-    const v = new THREE.Group(); v.position.set(0.58, 0.33, s * 0.075); v.rotation.y = -s * 0.5; g.add(v);
-    v.add(part(rbox(0.012, 0.17, 0.17, 0.006), C));
-    for (let i = 0; i < 5; i++) v.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.13, 0.012), mat(0x2d2d2d, 'matte')), 0.002, 0, -0.06 + i * 0.03));
-    lamp(g, 0.6, 0.31, s * 0.19, 0.035);
-  }
-  bumper(g, 0.64, 0.17, 0.5); bumper(g, -0.56, 0.17, 0.46);
-  g.add(at(part(rbox(0.012, 0.3, 0.38, 0.01), C), -0.545, 0.4, 0));
-  const ws = wheelsAt(g, [-0.38, 0.4], wR, 0.245, 0.09);
-  return root(g, spinAll(ws));
-}
 
 // Lámpara WG24 (Wagenfeld y Jucker, Bauhaus 1923–24): 36 cm de alto, base de vidrio de 18 cm, caño de vidrio
 // con la varilla metálica adentro, pantalla de vidrio opalino (más de media esfera) sobre aro niquelado, cadenita.
@@ -493,32 +369,6 @@ export function buildB3() {
   return root(g);
 }
 
-// Club Obrero (Ródchenko, pabellón soviético de París 1925): mesa de ajedrez con dos sillas fijas a la misma base;
-// el tablero pivotea para darse vuelta. Rojo, negro y gris.
-export function buildClub() {
-  const g = new THREE.Group();
-  g.add(at(part(rbox(1.1, 0.04, 0.36, 0.008), 0x2a2a2a, 'matte'), 0, 0.02, 0));        // base común
-  g.add(at(part(rbox(0.08, 0.5, 0.26, 0.008), ROJO), 0, 0.29, 0));                      // pie de la mesa
-  for (const s of [-1, 1]) g.add(at(part(rbox(0.04, 0.12, 0.3, 0.006), 0x2a2a2a, 'matte'), 0, 0.6, s * 0.0));
-  const cv = document.createElement('canvas'); cv.width = cv.height = 256; const c = cv.getContext('2d');
-  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { c.fillStyle = (i + j) % 2 ? '#1a1a1a' : '#e8e4da'; c.fillRect(i * 32, j * 32, 32, 32); }
-  const tx = new THREE.CanvasTexture(cv); tx.encoding = THREE.sRGBEncoding;
-  const board = new THREE.Group(); board.position.set(0, 0.62, 0); g.add(board);   // pivota sobre el eje x
-  board.add(part(rbox(0.32, 0.03, 0.32, 0.006), ROJO));
-  for (const sgn of [1, -1]) {
-    const f = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.28), new THREE.MeshStandardMaterial({ map: tx, roughness: 0.5 }));
-    f.rotation.x = -sgn * Math.PI / 2; f.position.y = sgn * 0.0155; board.add(f);
-  }
-  for (const s of [-1, 1]) {
-    const ch = new THREE.Group(); ch.position.set(s * 0.36, 0, 0); ch.rotation.y = s > 0 ? Math.PI : 0; g.add(ch);
-    ch.add(at(part(rbox(0.24, 0.035, 0.26, 0.006), ROJO), 0.02, 0.36, 0));             // asiento
-    ch.add(at(part(rbox(0.04, 0.34, 0.2, 0.006), ROJO), 0.02, 0.19, 0));               // pie del asiento
-    // respaldo alto: bastidor negro con tablillas
-    for (const z of [-0.12, 0.12]) ch.add(at(part(rbox(0.03, 0.62, 0.03, 0.006), NEGRO, 'matte'), -0.11, 0.62, z));
-    for (let i = 0; i < 4; i++) ch.add(at(part(rbox(0.025, 0.05, 0.24, 0.006), i % 2 ? 0x9a9d9f : NEGRO, 'matte'), -0.11, 0.48 + i * 0.12, 0));
-  }
-  return root(g, (now, t) => { board.rotation.x = smooth(0.8, 1.8, t) * Math.PI + (t > 1.8 ? smooth(4, 5, (t % 6)) * Math.PI : 0); });
-}
 
 // Silla de Tatlin (Moscú 1927, realizada por el estudiante Rogozhin): voladizo de madera curvada (fresno)
 // en un trazo continuo, asiento redondeado y respaldo de lámina curvada.
@@ -716,31 +566,6 @@ export function buildMagiclick() {
   });
 }
 
-// Motocompo (Honda 1981): 1185 × 535 × 240 mm plegada, entra en el baúl del Honda City; manubrio y asiento
-// se despliegan de la caja; ruedas de 8" metidas abajo.
-export function buildMotocompo() {
-  const g = new THREE.Group(), R = 0xd23a2e;
-  const L = 1.0, H = 0.45, W = 0.2;
-  g.add(at(part(deform(rbox(L, H, W, 0.04, 4), (v) => { if (v.y > 0 && v.x > 0.3) v.y -= (v.x - 0.3) * 0.25; }), R), 0, 0.075 + H / 2, 0));
-  g.add(at(part(rbox(L * 0.98, 0.08, W + 0.004, 0.02), 0x2a2a2a, 'matte'), 0, 0.12, 0));
-  const lb = label('HONDA', 0.18, 0.05, { fg: '#ffffff' });
-  for (const s of [-1, 1]) { const m = lb.clone(); m.position.set(-0.15, 0.35, s * (W / 2 + 0.002)); m.rotation.y = s < 0 ? Math.PI : 0; g.add(m); }
-  g.add(at(part(rbox(0.012, 0.05, 0.1, 0.008), 0xfff1b8, 'glow'), L / 2 + 0.003, 0.36, 0));
-  g.add(at(part(rbox(0.012, 0.04, 0.08, 0.008), 0xe2402e, 'glow'), -L / 2 - 0.003, 0.38, 0));
-  const ws = [];
-  for (const x of [-0.36, 0.36]) { const w = rimWheel(0.085, 0.06); w.position.set(x, 0.085, 0); g.add(w); ws.push(w); }
-  const bar = new THREE.Group(); bar.position.set(0.36, 0.5, 0); g.add(bar);
-  bar.add(at(cyl(0.015, 0.42, 0xd7dadc, 'chrome', 12), 0, 0.21, 0));
-  bar.add(at(cyl(0.013, 0.36, NEGRO, 'rubber', 12), 0, 0.42, 0, Math.PI / 2));
-  const seat = new THREE.Group(); seat.position.set(-0.3, 0.52, 0); g.add(seat);
-  seat.add(at(cyl(0.015, 0.22, 0xd7dadc, 'chrome', 12), 0, 0.11, 0));
-  seat.add(at(part(rbox(0.2, 0.045, 0.14, 0.02), NEGRO, 'matte'), 0, 0.23, 0));
-  return root(g, (now, t, dt) => {
-    const k = smooth(0.6, 1.5, t);
-    bar.scale.y = 0.05 + 0.95 * k; seat.scale.y = 0.05 + 0.95 * smooth(1.0, 1.8, t); bar.rotation.z = 0.18 * k;
-    ws.forEach((w) => (w.rotation.z -= 3 * dt * smooth(1.8, 2.2, t)));
-  });
-}
 
 // Fábrica Militar de Aviones (Córdoba, 1927): naves con techo de diente de sierra y, volando arriba,
 // un Avro 504 (biplano que la FMA fabricó bajo licencia en sus primeros años).
@@ -866,5 +691,466 @@ export function buildWatt() {
     const mid = R.clone().add(pl).multiplyScalar(0.5), dir = pl.clone().sub(R);
     conrod.position.copy(mid); conrod.scale.y = dir.length() / 0.6; conrod.quaternion.setFromUnitVectors(V(0, 1, 0), dir.normalize());
     gov.rotation.y += 5 * dt; arms.forEach(([arm, s]) => (arm.rotation.z = s * (0.5 + 0.15 * Math.sin(now / 900))));
+  });
+}
+
+// =================== V3: autos, Motocompo y mesa de Ródchenko hechos sobre fotos de referencia ===================
+
+const fnOrCurve = (v) => (typeof v === 'function' ? v : curveFn(v));
+// arcos de rueda: la línea inferior de la carrocería sube en semicírculo sobre cada rueda
+function archedBottom(rocker, wheels, R) {
+  const base = fnOrCurve(rocker);
+  return (x) => {
+    let y = base(x);
+    for (const wx of wheels.x) {
+      const d = x - wx;
+      if (Math.abs(d) < R) y = Math.max(y, wheels.y + Math.sqrt(R * R - d * d));
+    }
+    return y;
+  };
+}
+// loft v3: acepta funciones, "tumble" (la cabina se angosta arriba de la cintura) y más resolución
+function loft3({ x0, x1, top, bot, wid, p = 0.4, N = 220, M = 120, belt = 1, tumble = 0 }) {
+  const T = fnOrCurve(top), B = fnOrCurve(bot), W = fnOrCurve(wid);
+  const pos = [], idx = [];
+  for (let i = 0; i <= N; i++) {
+    const x = x0 + (x1 - x0) * i / N;
+    const yt = T(x), yb = B(x), yc = (yt + yb) / 2, ry = Math.max(0.0005, (yt - yb) / 2);
+    const rz = (i === 0 || i === N) ? 0.0001 : W(x);
+    for (let j = 0; j < M; j++) {
+      const a = (j / M) * Math.PI * 2, c = Math.cos(a), s = Math.sin(a);
+      const y = yc + ry * Math.sign(s) * Math.pow(Math.abs(s), p);
+      const k = y > belt ? 1 - tumble * Math.min(1, (y - belt) / Math.max(0.01, yt - belt)) : 1;
+      pos.push(x, y, rz * k * Math.sign(c) * Math.pow(Math.abs(c), p));
+    }
+  }
+  for (let i = 0; i < N; i++) for (let j = 0; j < M; j++) {
+    const a = i * M + j, b = i * M + (j + 1) % M, c = (i + 1) * M + j, d = (i + 1) * M + (j + 1) % M;
+    idx.push(a, c, b, b, c, d);
+  }
+  const n0 = pos.length / 3; pos.push(x0, (T(x0) + B(x0)) / 2, 0);
+  const n1 = pos.length / 3; pos.push(x1, (T(x1) + B(x1)) / 2, 0);
+  for (let j = 0; j < M; j++) { idx.push(n0, j, (j + 1) % M); idx.push(n1, N * M + (j + 1) % M, N * M + j); }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  return geo;
+}
+// pintura con: ventanillas (por píxel), juntas de puertas/capot (líneas finas) y pasaruedas oscuros
+function paint3(color, { win, seams = [], hseams = [], shade = null } = {}) {
+  const m = new THREE.MeshPhysicalMaterial({ color, roughness: 0.28, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.08, envMapIntensity: 0.75 });
+  const f = (v) => (+v).toFixed(4);
+  m.onBeforeCompile = (sh) => {
+    sh.vertexShader = 'varying vec3 vObj;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvObj = position;');
+    let code = 'float gw = 0.0; float seam = 0.0;\n';
+    if (win) {
+      code += `float inX = smoothstep(${f(win.xa)}, ${f(win.xa + 0.004)}, vObj.x) * (1.0 - smoothstep(${f(win.xb - 0.004)}, ${f(win.xb)}, vObj.x));
+        float inY = smoothstep(${f(win.belt)}, ${f(win.belt + 0.003)}, vObj.y) * (1.0 - smoothstep(${f(win.top - 0.003)}, ${f(win.top)}, vObj.y));
+        float pil = 0.0;\n`;
+      for (const [a, b] of win.pillars || []) code += `pil = max(pil, smoothstep(${f(a - 0.003)}, ${f(a)}, vObj.x) * (1.0 - smoothstep(${f(b)}, ${f(b + 0.003)}, vObj.x)));\n`;
+      code += 'gw = inX * inY * (1.0 - pil);\n';
+    }
+    for (const s of seams) code += `seam = max(seam, (1.0 - smoothstep(0.0012, 0.0024, abs(vObj.x - (${f(s.x)})))) * step(${f(s.y0)}, vObj.y) * step(vObj.y, ${f(s.y1)}) * step(${f(s.zmin || 0.05)}, abs(vObj.z)));\n`;
+    for (const s of hseams) code += `seam = max(seam, (1.0 - smoothstep(0.0012, 0.0024, abs(vObj.y - (${f(s.y)})))) * step(${f(s.x0)}, vObj.x) * step(vObj.x, ${f(s.x1)}) * step(${f(s.zmin || 0.05)}, abs(vObj.z)));\n`;
+    code += 'diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.25, seam * 0.85);\n';
+    code += 'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.010, 0.016, 0.022), gw);\n';
+    if (shade) code += `diffuseColor.rgb *= mix(1.0, 0.25, step(vObj.y, ${f(shade)}) * step(abs(vObj.z), 1.0));\n`;
+    sh.fragmentShader = 'varying vec3 vObj;\nfloat gwG;\n' + sh.fragmentShader
+      .replace('#include <color_fragment>', '#include <color_fragment>\n{\n' + code + 'gwG = gw;\n}')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix(roughnessFactor, 0.02, gwG);');
+  };
+  m.customProgramCacheKey = () => 'p3' + JSON.stringify([win, seams, hseams, shade]);
+  return m;
+}
+function body3(geo, mat3) { const g = part(geo, 0xffffff, 'paint'); g.children[0].material = mat3; return g; }
+
+const CROMO = 0xe4e7ea;
+function chromeMat() { return new THREE.MeshPhysicalMaterial({ color: 0xf0f2f4, metalness: 1, roughness: 0.12, envMapIntensity: 1.2 }); }
+function rubberMat() { return new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.85 }); }
+// neumático con perfil real (lathe), opcional banda blanca, y taza cromada
+function tire3({ r = 0.09, w = 0.06, white = false, cap = 'dome', capColor = CROMO, rimColor = 0x2b2b2b } = {}) {
+  const g = new THREE.Group();
+  const prof = [];
+  const rin = r * 0.62;
+  for (let i = 0; i <= 16; i++) { const a = -Math.PI / 2 + Math.PI * i / 16; prof.push(new THREE.Vector2(r - w * 0.18 + Math.cos(a) * w * 0.18 * 1.0, Math.sin(a) * w / 2)); }
+  prof.unshift(new THREE.Vector2(rin, -w * 0.45)); prof.push(new THREE.Vector2(rin, w * 0.45));
+  const tg = new THREE.LatheGeometry(prof, 48); tg.rotateX(Math.PI / 2);
+  const tire = new THREE.Mesh(tg, rubberMat()); g.add(tire);
+  const ol = part(tg, 0, 'matte').children[1]; g.add(ol);
+  if (white) { const wr = new THREE.Mesh(new THREE.RingGeometry(rin * 1.04, r * 0.84, 48), new THREE.MeshStandardMaterial({ color: 0xf1efe8, roughness: 0.6 })); wr.position.z = w * 0.5 + 0.0015; g.add(wr); }
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(rin, rin, w * 0.85, 40), new THREE.MeshStandardMaterial({ color: rimColor, metalness: 0.2, roughness: 0.45 }));
+  rim.rotation.x = Math.PI / 2; g.add(rim);
+  const capG = cap === 'dome' ? new THREE.SphereGeometry(rin * 0.62, 40, 16, 0, Math.PI * 2, 0, Math.PI * 0.4) : new THREE.CylinderGeometry(rin * 0.95, rin * 0.98, 0.01, 40);
+  const c = new THREE.Mesh(capG, cap === 'dome' ? chromeMat() : new THREE.MeshStandardMaterial({ color: capColor, metalness: 0.6, roughness: 0.3 }));
+  if (cap === 'dome') { c.rotation.x = Math.PI / 2; c.position.z = w * 0.42 - rin * 0.62 * Math.cos(Math.PI * 0.4); }
+  else { c.rotation.x = Math.PI / 2; c.position.z = w * 0.44; }
+  g.add(c);
+  for (let i = 0; i < 4; i++) {
+    const n = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.006, 6), new THREE.MeshStandardMaterial({ color: 0x555555, metalness: 0.8, roughness: 0.3 }));
+    n.rotation.x = Math.PI / 2; n.position.set(Math.cos(i * Math.PI / 2) * rin * 0.35, Math.sin(i * Math.PI / 2) * rin * 0.35, w * 0.47 + 0.002); g.add(n);
+  }
+  return g;
+}
+function mountWheels(g, xs, y, z, opts) {
+  const ws = [];
+  for (const x of xs) for (const s of [-1, 1]) {
+    const w = tire3(opts); w.position.set(x, y, s * z); if (s < 0) w.rotation.y = Math.PI; g.add(w); ws.push(w);
+  }
+  return ws;
+}
+const spin3 = (ws, r) => (now, t, dt) => ws.forEach((w) => (w.rotation.z += (w.rotation.y ? 1 : -1) * dt * 0.45 / r));
+// faro redondo: aro cromado + lente con brillo
+function roundLamp(g, x, y, z, r, { rotY = 0, color = 0xfff6d8, lens = true } = {}) {
+  const grp = new THREE.Group(); grp.position.set(x, y, z); grp.rotation.y = rotY; g.add(grp);
+  grp.add(at(new THREE.Mesh(new THREE.TorusGeometry(r, r * 0.14, 12, 40), chromeMat()), 0, 0, 0, 0, Math.PI / 2));
+  const l = new THREE.Mesh(new THREE.SphereGeometry(r * 0.95, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.28), new THREE.MeshPhysicalMaterial({ color, emissive: color, emissiveIntensity: 0.25, roughness: 0.05, clearcoat: 1, transmission: 0 }));
+  l.rotation.z = -Math.PI / 2; l.position.x = -r * 0.95 * Math.cos(Math.PI * 0.28) + 0.004; grp.add(l);
+  return grp;
+}
+// paragolpes cromado que sigue la planta del auto
+function bumper3(g, pts, r = 0.012) {
+  const c = new THREE.CatmullRomCurve3(pts.map(([x, y, z]) => V(x, y, z)));
+  const m = new THREE.Mesh(new THREE.TubeGeometry(c, 64, r, 12, false), chromeMat()); g.add(m);
+  const o = part(m.geometry, 0, 'matte').children[1]; g.add(o);
+  for (const end of [pts[0], pts[pts.length - 1]]) g.add(at(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), chromeMat()), end[0], end[1], end[2]));
+}
+function trim(g, pts, r = 0.0035) {
+  const c = new THREE.CatmullRomCurve3(pts.map(([x, y, z]) => V(x, y, z)));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(c, 80, r, 8, false), chromeMat()));
+}
+function canvasTex(w, h, draw) {
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
+}
+
+// ---------- Mazda R360 Coupé (1960) ----------
+// 2980 × 1290 × 1290 mm, distancia entre ejes 1760, neumáticos 4.80-10. Trompa lisa sin parrilla con "MAZDA" en letras,
+// faros redondos altos en las aletas, espejos sobre los guardabarros, techo burbuja, motor atrás con rejillas en la tapa.
+export function buildR360() {
+  const g = new THREE.Group(), K = 1 / 2.98, C = 0x9cc0e0;
+  const wx = [0.5 - 0.2, 0.5 - 0.2 - 1.76 * K], wr = 0.52 / 2 * K * 1.0, wy = wr;
+  const top = curveFn([[-0.5, 0.16], [-0.495, 0.24], [-0.47, 0.285], [-0.4, 0.315], [-0.33, 0.335], [-0.24, 0.395], [-0.17, 0.425], [-0.05, 0.433],
+    [0.03, 0.425], [0.1, 0.37], [0.14, 0.335], [0.3, 0.318], [0.42, 0.298], [0.475, 0.265], [0.497, 0.21], [0.5, 0.16]]);
+  const rocker = curveFn([[-0.5, 0.16], [-0.49, 0.1], [-0.44, 0.075], [0.44, 0.07], [0.49, 0.1], [0.5, 0.16]]);
+  const bot = archedBottom(rocker, { x: wx, y: wy }, wr * 1.18);
+  const wid = curveFn([[-0.5, 0.13], [-0.47, 0.19], [-0.4, 0.212], [0.0, 0.216], [0.36, 0.212], [0.45, 0.195], [0.49, 0.16], [0.5, 0.12]]);
+  const geo = loft3({ x0: -0.5, x1: 0.5, top, bot, wid, p: 0.36, belt: 0.32, tumble: 0.2 });
+  g.add(body3(geo, paint3(C, {
+    win: { xa: -0.335, xb: 0.142, belt: 0.322, top: 0.418, pillars: [[0.105, 0.12], [-0.115, -0.1], [-0.235, -0.205]] },
+    seams: [{ x: 0.12, y0: 0.09, y1: 0.322, zmin: 0.12 }, { x: -0.115, y0: 0.085, y1: 0.322, zmin: 0.12 }],
+    hseams: [{ y: 0.316, x0: 0.15, x1: 0.44, zmin: 0.0 }],
+  })));
+  // trompa: faros altos en las aletas, cuartos de luz abajo, emblema y letras MAZDA
+  for (const s of [-1, 1]) {
+    // los faros salen de las aletas en una "cápsula" del color de la carrocería
+    const pod = part(new THREE.CylinderGeometry(0.04, 0.043, 0.09, 32), C, 'paint'); pod.children[0].material = paint3(C);
+    pod.position.set(0.455, 0.262, s * 0.145); pod.rotation.z = Math.PI / 2 - 0.05; g.add(pod);
+    roundLamp(g, 0.5, 0.264, s * 0.145, 0.034);
+    const pk = part(new THREE.CylinderGeometry(0.016, 0.016, 0.04, 20), C, 'paint'); pk.children[0].material = paint3(C);
+    pk.position.set(0.485, 0.19, s * 0.15); pk.rotation.z = Math.PI / 2; g.add(pk);
+    roundLamp(g, 0.505, 0.19, s * 0.15, 0.014, { color: 0xffc66b });
+    g.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.013, 14, 10), new THREE.MeshPhysicalMaterial({ color: 0xd52a1c, emissive: 0x8a1208, roughness: 0.1 })), -0.492, 0.235, s * 0.15));
+    // espejo sobre el guardabarros
+    g.add(tube([V(0.36, 0.318, s * 0.17), V(0.365, 0.35, s * 0.18)], 0.003, CROMO, 'chrome', false, false));
+    g.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.012, 16, 10), chromeMat()), 0.365, 0.357, s * 0.18));
+    // manija de la puerta y rejillas de aire atrás
+    g.add(at(new THREE.Mesh(new THREE.CapsuleGeometry(0.003, 0.025, 4, 8), chromeMat()), 0.06, 0.29, s * 0.213, 0, 0, Math.PI / 2));
+    for (let i = 0; i < 5; i++) g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.004, 0.004), mat(0x223040, 'matte')), -0.29, 0.255 + i * 0.012, s * 0.211));
+    // limpiaparabrisas
+    g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.003, 0.09), mat(NEGRO, 'matte')), 0.135, 0.338, s * 0.05, 0, 0, 0.6));
+  }
+  const name = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.022), new THREE.MeshStandardMaterial({ map: canvasTex(512, 72, (c, w, h) => {
+    c.fillStyle = '#e8ecef'; c.font = 'bold 52px Helvetica'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.letterSpacing = '30px'; c.fillText('M A Z D A', w / 2, h / 2); }), transparent: true, metalness: 0.8, roughness: 0.2 }));
+  name.position.set(0.4975, 0.24, 0); name.rotation.y = Math.PI / 2; g.add(name);
+  g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.004, 24), chromeMat()), 0.455, 0.29, 0, 0, 0, Math.PI / 2 - 0.5));
+  // tapa del motor con rejillas
+  for (let i = 0; i < 7; i++) g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.003, 0.09), mat(0x223040, 'matte')), -0.36 - i * 0.012, 0.329 - i * 0.0035, 0, 0, 0, -0.3));
+  bumper3(g, [[0.49, 0.13, -0.19], [0.515, 0.13, -0.12], [0.52, 0.13, 0], [0.515, 0.13, 0.12], [0.49, 0.13, 0.19]], 0.009);
+  bumper3(g, [[-0.48, 0.13, -0.19], [-0.512, 0.13, -0.12], [-0.517, 0.13, 0], [-0.512, 0.13, 0.12], [-0.48, 0.13, 0.19]], 0.009);
+  g.add(at(new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.035), new THREE.MeshStandardMaterial({ map: canvasTex(256, 90, (c, w, h) => { c.fillStyle = '#f4f1e6'; c.fillRect(0, 0, w, h); c.strokeStyle = '#1b3a6b'; c.lineWidth = 6; c.strokeRect(3, 3, w - 6, h - 6); c.fillStyle = '#1b3a6b'; c.font = 'bold 44px Helvetica'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('R360', w / 2, h / 2 + 2); }) })), -0.513, 0.175, 0, 0, -Math.PI / 2));
+  const ws = mountWheels(g, wx, wy, 0.188, { r: wr, w: 0.05, white: true, cap: 'dome', rimColor: C });
+  return root(g, spin3(ws, wr));
+}
+
+// ---------- Renault 12 (1969) ----------
+// 4348 × 1616 × 1435 mm, entre ejes 2441. Tres volúmenes con trompa recta: faros rectangulares a los lados de una parrilla
+// ancha de barras horizontales con el rombo, capot con nervio central, línea de hombros marcada, baúl largo y plano.
+export function buildR12() {
+  const g = new THREE.Group(), K = 1.1 / 4.348, C = 0x6f7a2a;
+  const fx = 0.55 - 0.86 * K, wx = [fx, fx - 2.441 * K], wr = 0.57 / 2 * K, wy = wr;
+  const top = curveFn([[-0.55, 0.11], [-0.548, 0.2], [-0.54, 0.228], [-0.5, 0.236], [-0.33, 0.243], [-0.28, 0.262], [-0.2, 0.33], [-0.16, 0.352], [-0.02, 0.356],
+    [0.07, 0.35], [0.14, 0.27], [0.18, 0.245], [0.42, 0.233], [0.52, 0.226], [0.546, 0.212], [0.55, 0.11]]);
+  const rocker = curveFn([[-0.55, 0.11], [-0.54, 0.068], [-0.5, 0.058], [0.5, 0.058], [0.54, 0.066], [0.55, 0.11]]);
+  const bot = archedBottom(rocker, { x: wx, y: wy }, wr * 1.2);
+  const wid = curveFn([[-0.55, 0.17], [-0.53, 0.198], [-0.45, 0.205], [0.45, 0.205], [0.53, 0.2], [0.55, 0.175]]);
+  const geo = loft3({ x0: -0.55, x1: 0.55, top, bot, wid, p: 0.22, belt: 0.24, tumble: 0.2 });
+  g.add(body3(geo, paint3(C, {
+    win: { xa: -0.315, xb: 0.142, belt: 0.244, top: 0.345, pillars: [[-0.072, -0.058], [-0.225, -0.17]] },
+    seams: [{ x: 0.13, y0: 0.07, y1: 0.244, zmin: 0.15 }, { x: -0.065, y0: 0.07, y1: 0.244, zmin: 0.15 }, { x: -0.2, y0: 0.08, y1: 0.244, zmin: 0.15 }],
+    hseams: [{ y: 0.236, x0: -0.5, x1: -0.3, zmin: 0.0 }, { y: 0.23, x0: 0.18, x1: 0.53, zmin: 0.0 }],
+  })));
+  // línea de hombro cromada y nervio del capot
+  for (const s of [-1, 1]) trim(g, [[-0.53, 0.205, s * 0.2], [0.0, 0.205, s * 0.206], [0.53, 0.205, s * 0.2]], 0.0028);
+  g.add(at(part(rbox(0.32, 0.006, 0.09, 0.003), C, 'paint'), 0.36, 0.232, 0));
+  // trompa: parrilla ancha de barras horizontales + faros rectangulares + rombo
+  const grille = new THREE.Group(); grille.position.set(0.551, 0.17, 0); g.add(grille);
+  grille.add(at(new THREE.Mesh(rbox(0.012, 0.06, 0.34, 0.006), new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.6 })), 0, 0, 0));
+  for (let i = 0; i < 5; i++) grille.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.0035, 0.2), chromeMat()), 0.006, -0.022 + i * 0.011, 0));
+  grille.add(at(new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.0025, 4, 4), chromeMat()), 0.009, 0, 0, 0, Math.PI / 2));
+  for (const s of [-1, 1]) {
+    const hl = new THREE.Group(); hl.position.set(0.553, 0.172, s * 0.135); g.add(hl);
+    hl.add(new THREE.Mesh(rbox(0.01, 0.05, 0.07, 0.008), chromeMat()));
+    hl.add(at(new THREE.Mesh(rbox(0.006, 0.042, 0.062, 0.006), new THREE.MeshPhysicalMaterial({ color: 0xfff6d8, emissive: 0xfff0c0, emissiveIntensity: 0.3, roughness: 0.05, clearcoat: 1 })), 0.004, 0, 0));
+    g.add(at(new THREE.Mesh(rbox(0.008, 0.014, 0.04, 0.004), new THREE.MeshPhysicalMaterial({ color: 0xffa640, emissive: 0x8a4a10, roughness: 0.1 })), 0.548, 0.128, s * 0.16));
+    // luces traseras horizontales
+    const tl = new THREE.Group(); tl.position.set(-0.551, 0.17, s * 0.145); g.add(tl);
+    tl.add(new THREE.Mesh(rbox(0.008, 0.04, 0.09, 0.006), chromeMat()));
+    tl.add(at(new THREE.Mesh(rbox(0.006, 0.032, 0.05, 0.005), new THREE.MeshPhysicalMaterial({ color: 0xc81e1e, emissive: 0x5a0a0a, roughness: 0.1 })), -0.004, 0, -s * 0.018));
+    tl.add(at(new THREE.Mesh(rbox(0.006, 0.032, 0.03, 0.005), new THREE.MeshPhysicalMaterial({ color: 0xffa640, emissive: 0x5a3008, roughness: 0.1 })), -0.004, 0, s * 0.028));
+    // manijas, espejo
+    for (const x of [0.05, -0.12]) g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.006), chromeMat()), x, 0.226, s * 0.204));
+    g.add(at(new THREE.Mesh(new THREE.TorusGeometry(0.004, 0.002, 4, 4), chromeMat()), 0.4, 0.07, s * 0.21));
+  }
+  g.add(at(new THREE.Mesh(rbox(0.006, 0.012, 0.06, 0.003), chromeMat()), 0.12, 0.25, 0.19));   // espejo
+  bumper3(g, [[0.5, 0.115, -0.205], [0.552, 0.115, -0.17], [0.562, 0.115, 0], [0.552, 0.115, 0.17], [0.5, 0.115, 0.205]], 0.008);
+  bumper3(g, [[-0.5, 0.115, -0.205], [-0.552, 0.115, -0.17], [-0.562, 0.115, 0], [-0.552, 0.115, 0.17], [-0.5, 0.115, 0.205]], 0.008);
+  for (const x of [0.563, -0.563]) for (const s of [-1, 1]) g.add(at(new THREE.Mesh(rbox(0.012, 0.03, 0.02, 0.005), rubberMat()), x, 0.112, s * 0.08));
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.025), new THREE.MeshStandardMaterial({ map: canvasTex(400, 90, (c, w, h) => { c.fillStyle = '#111'; c.fillRect(0, 0, w, h); c.fillStyle = '#eee'; c.font = 'bold 56px Helvetica'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('X 012345', w / 2, h / 2 + 3); }) }));
+  plate.position.set(-0.551, 0.14, 0); plate.rotation.y = -Math.PI / 2; g.add(plate);
+  const ws = mountWheels(g, wx, wy, 0.178, { r: wr, w: 0.045, cap: 'flat', capColor: 0xcfd3d6 });
+  const puffs = [];
+  for (let i = 0; i < 4; i++) {
+    const p = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshStandardMaterial({ color: 0xd9b56a, transparent: true, opacity: 0.8, roughness: 1 }));
+    g.add(p); puffs.push(p);
+  }
+  return root(g, (now, t, dt) => {
+    spin3(ws, wr)(now, t, dt);
+    puffs.forEach((p, i) => {
+      const ph = ((now / 1000 + i * 0.4) % 1.6) / 1.6;
+      p.position.set(-0.58 - ph * 0.3, 0.08 + ph * 0.2, 0.12); p.scale.setScalar(0.5 + ph * 1.4); p.material.opacity = 0.75 * (1 - ph);
+    });
+  });
+}
+
+// ---------- Rastrojero (IAME, Córdoba 1952) ----------
+// Pick-up con mecánica Willys: guardabarros delanteros sueltos con los faros adentro, parrilla plana de barras
+// verticales entre los guardabarros, parabrisas partido en dos, cabina con techo redondeado, estribos y caja de carga.
+export function buildRastrojero() {
+  const g = new THREE.Group(), C = 0x5a8a3a, D = 0x2a2a2a;
+  const wx = [0.33, -0.36], wr = 0.085, wy = wr;
+  const pm = paint3(C), pmCab = paint3(C, { win: { xa: -0.06, xb: 0.225, belt: 0.43, top: 0.585, pillars: [[0.145, 0.16], [0.198, 0.212]] },
+    seams: [{ x: 0.15, y0: 0.18, y1: 0.43, zmin: 0.15 }, { x: -0.04, y0: 0.18, y1: 0.43, zmin: 0.15 }] });
+  // cabina (con parabrisas partido: el parante central se hace con una franja de pintura vertical)
+  const cab = loft3({ x0: -0.08, x1: 0.24, p: 0.3, belt: 0.43, tumble: 0.12,
+    top: [[-0.08, 0.22], [-0.075, 0.55], [-0.04, 0.615], [0.05, 0.63], [0.17, 0.625], [0.205, 0.59], [0.232, 0.44], [0.24, 0.3]],
+    bot: [[-0.08, 0.22], [-0.075, 0.17], [0.24, 0.17]],
+    wid: [[-0.08, 0.2], [-0.07, 0.215], [0.23, 0.215], [0.24, 0.205]] });
+  g.add(body3(cab, pmCab));
+  g.add(at(part(rbox(0.012, 0.13, 0.014, 0.004), C, 'paint'), 0.214, 0.51, 0, 0, 0, 0.26));       // parante central del parabrisas
+  // capot angosto con lomo
+  g.add(body3(loft3({ x0: 0.22, x1: 0.57, p: 0.35, N: 120, M: 80,
+    top: [[0.22, 0.43], [0.3, 0.432], [0.5, 0.425], [0.56, 0.405], [0.57, 0.35]],
+    bot: [[0.22, 0.24], [0.57, 0.24]], wid: [[0.22, 0.12], [0.5, 0.115], [0.57, 0.105]] }), paint3(C, { hseams: [{ y: 0.405, x0: 0.24, x1: 0.55, zmin: 0.0 }] })));
+  // parrilla plana de barras verticales (estilo Willys) entre los guardabarros
+  const gr = new THREE.Group(); gr.position.set(0.572, 0.32, 0); g.add(gr);
+  gr.add(part(rbox(0.014, 0.17, 0.2, 0.01), C, 'paint'));
+  for (let i = 0; i < 9; i++) gr.add(at(new THREE.Mesh(rbox(0.008, 0.13, 0.009, 0.003), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5 })), 0.005, 0, -0.08 + i * 0.02));
+  // guardabarros delanteros sueltos, con faro adentro
+  for (const s of [-1, 1]) {
+    const fend = loft3({ x0: 0.13, x1: 0.62, p: 0.62, N: 120, M: 60,
+      top: [[0.13, 0.2], [0.2, 0.28], [0.3, 0.33], [0.45, 0.345], [0.56, 0.33], [0.61, 0.28], [0.62, 0.22]],
+      bot: (x) => Math.max(0.2, wy + Math.sqrt(Math.max(0, (wr * 1.35) ** 2 - (x - wx[0]) ** 2)) - 0.005),
+      wid: [[0.13, 0.03], [0.22, 0.065], [0.55, 0.068], [0.62, 0.05]] });
+    const f = body3(fend, pm); f.position.z = s * 0.205; g.add(f);
+    roundLamp(g, 0.6, 0.3, s * 0.205, 0.032);
+    // estribo
+    g.add(at(part(rbox(0.44, 0.012, 0.07, 0.004), D, 'matte'), -0.02, 0.17, s * 0.225));
+    // espejo y manija
+    g.add(tube([V(0.22, 0.45, s * 0.215), V(0.24, 0.5, s * 0.27)], 0.003, CROMO, 'chrome', false, false));
+    g.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.005, 20), chromeMat()), 0.24, 0.5, s * 0.272, Math.PI / 2));
+    g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.006), chromeMat()), -0.02, 0.41, s * 0.217));
+  }
+  // caja de carga
+  const caja = new THREE.Group(); caja.position.set(-0.4, 0, 0); g.add(caja);
+  caja.add(at(part(rbox(0.6, 0.025, 0.42, 0.005), D, 'matte'), 0, 0.2, 0));
+  for (const s of [-1, 1]) {
+    caja.add(at(body3(rbox(0.6, 0.17, 0.02, 0.006), pm), 0, 0.3, s * 0.2));
+    caja.add(at(part(rbox(0.6, 0.012, 0.03, 0.004), D, 'matte'), 0, 0.39, s * 0.2));
+    for (const x of [-0.2, 0.0, 0.2]) caja.add(at(part(rbox(0.018, 0.17, 0.026, 0.004), D, 'matte'), x, 0.3, s * 0.2));
+    // guardabarros traseros
+    const rf = loft3({ x0: -0.17, x1: 0.17, p: 0.6, N: 80, M: 48,
+      top: (x) => wy + Math.sqrt(Math.max(0, 0.13 ** 2 - x * x)) + 0.012, bot: (x) => wy + Math.sqrt(Math.max(0, 0.12 ** 2 - x * x)) - 0.01,
+      wid: [[-0.17, 0.02], [-0.12, 0.04], [0.12, 0.04], [0.17, 0.02]] });
+    const r = body3(rf, pm); r.position.set(wx[1] + 0.4, 0, s * 0.215); caja.add(r);
+    caja.add(at(new THREE.Mesh(rbox(0.01, 0.03, 0.04, 0.004), new THREE.MeshPhysicalMaterial({ color: 0xc81e1e, emissive: 0x5a0a0a, roughness: 0.1 })), -0.305, 0.28, s * 0.17));
+  }
+  caja.add(at(body3(rbox(0.02, 0.17, 0.42, 0.006), pm), -0.3, 0.3, 0));
+  caja.add(at(body3(rbox(0.02, 0.17, 0.42, 0.006), pm), 0.29, 0.3, 0));
+  bumper3(g, [[0.62, 0.17, -0.25], [0.635, 0.17, 0], [0.62, 0.17, 0.25]], 0.01);
+  g.add(at(part(rbox(1.15, 0.03, 0.3, 0.005), D, 'matte'), -0.04, 0.13, 0));       // chasis
+  const ws = mountWheels(g, wx, wy, 0.2, { r: wr, w: 0.055, cap: 'flat', capColor: 0x2f4a24 });
+  return root(g, spin3(ws, wr));
+}
+
+// ---------- IKA Estanciera (Córdoba 1957; Willys Jeep Station Wagon) ----------
+// Carrocería alta de chapa con laterales planos y nervaduras, techo blanco, parrilla vertical en "V" suave con los faros
+// en las esquinas, guardabarros planos tipo ala, parabrisas en dos paños, tres ventanillas por lado y portón atrás.
+export function buildEstanciera() {
+  const g = new THREE.Group(), C = 0xe4bf38, W = 0xf3f1ea, D = 0x2a2a2a;
+  const wx = [0.33, -0.36], wr = 0.1, wy = wr;
+  const pm = paint3(C), pw = paint3(W);
+  // carrocería principal (loft casi cuadrado)
+  const bodyGeo = loft3({ x0: -0.56, x1: 0.2, p: 0.16, belt: 0.43, tumble: 0.05, N: 200, M: 120,
+    top: [[-0.56, 0.2], [-0.558, 0.56], [-0.55, 0.585], [-0.5, 0.59], [0.12, 0.59], [0.17, 0.58], [0.197, 0.44], [0.2, 0.3]],
+    bot: archedBottom([[-0.56, 0.2], [-0.555, 0.14], [0.2, 0.14]], { x: wx, y: wy }, wr * 1.3),
+    wid: [[-0.56, 0.19], [-0.55, 0.205], [0.19, 0.205], [0.2, 0.195]] });
+  g.add(body3(bodyGeo, paint3(C, {
+    win: { xa: -0.545, xb: 0.195, belt: 0.43, top: 0.565, pillars: [[-0.385, -0.37], [-0.2, -0.185], [-0.01, 0.005], [0.155, 0.17]] },
+    seams: [{ x: 0.0, y0: 0.15, y1: 0.43, zmin: 0.17 }, { x: -0.19, y0: 0.15, y1: 0.43, zmin: 0.17 }],
+    hseams: [{ y: 0.3, x0: -0.55, x1: 0.18, zmin: 0.19 }, { y: 0.32, x0: -0.55, x1: 0.18, zmin: 0.19 }],
+  })));
+  g.add(at(body3(rbox(0.77, 0.03, 0.42, 0.014), pw), -0.18, 0.595, 0));                       // techo blanco
+  g.add(at(part(rbox(0.01, 0.12, 0.002, 0.002), C, 'paint'), 0.19, 0.5, 0));                    // parante central del parabrisas
+  // capot y guardabarros planos
+  g.add(body3(loft3({ x0: 0.18, x1: 0.56, p: 0.2, N: 100, M: 80, top: [[0.18, 0.43], [0.4, 0.425], [0.55, 0.415], [0.56, 0.38]], bot: [[0.18, 0.27], [0.56, 0.27]],
+    wid: [[0.18, 0.14], [0.56, 0.13]] }), pm));
+  for (const s of [-1, 1]) {
+    const fend = loft3({ x0: 0.08, x1: 0.61, p: 0.16, N: 160, M: 80,
+      top: [[0.08, 0.2], [0.12, 0.33], [0.2, 0.365], [0.45, 0.372], [0.585, 0.365], [0.605, 0.34], [0.61, 0.3]],
+      bot: archedBottom([[0.08, 0.2], [0.1, 0.165], [0.55, 0.17], [0.61, 0.22]], { x: [wx[0]], y: wy }, wr * 1.3),
+      wid: [[0.08, 0.055], [0.15, 0.065], [0.6, 0.065], [0.61, 0.05]] });
+    const f = body3(fend, pm); f.position.z = s * 0.195; g.add(f);
+    g.add(at(part(rbox(0.36, 0.012, 0.06, 0.004), D, 'matte'), -0.1, 0.15, s * 0.22));          // estribo
+    g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.006), chromeMat()), 0.13, 0.42, s * 0.207));
+    g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.006, 0.006), chromeMat()), -0.06, 0.42, s * 0.207));
+  }
+  // parrilla en V suave, barras verticales, faros en las esquinas
+  for (const s of [-1, 1]) {
+    const half = new THREE.Group(); half.position.set(0.575, 0.33, s * 0.065); half.rotation.y = -s * 0.28; g.add(half);
+    half.add(body3(rbox(0.012, 0.15, 0.14, 0.006), pm));
+    for (let i = 0; i < 5; i++) half.add(at(new THREE.Mesh(rbox(0.008, 0.11, 0.012, 0.003), chromeMat()), 0.006, -0.005, -0.05 + i * 0.025));
+    roundLamp(g, 0.6, 0.38, s * 0.19, 0.032);
+    roundLamp(g, 0.6, 0.315, s * 0.19, 0.012, { color: 0xffc66b });
+    g.add(at(new THREE.Mesh(rbox(0.008, 0.035, 0.03, 0.004), new THREE.MeshPhysicalMaterial({ color: 0xc81e1e, emissive: 0x5a0a0a, roughness: 0.1 })), -0.563, 0.33, s * 0.18));
+  }
+  bumper3(g, [[0.58, 0.19, -0.25], [0.62, 0.19, 0], [0.58, 0.19, 0.25]], 0.012);
+  bumper3(g, [[-0.55, 0.17, -0.22], [-0.575, 0.17, 0], [-0.55, 0.17, 0.22]], 0.01);
+  // rueda de auxilio en el portón
+  const sp = tire3({ r: wr, w: 0.06, cap: 'flat', capColor: C }); sp.position.set(-0.6, 0.38, 0.07); sp.rotation.y = -Math.PI / 2; g.add(sp);
+  const ws = mountWheels(g, wx, wy, 0.21, { r: wr, w: 0.06, cap: 'flat', capColor: 0xd8d4c8 });
+  return root(g, spin3(ws, wr));
+}
+
+// ---------- Motocompo (Honda 1981) ----------
+// 1185 × 535 × 240 mm plegada (45 kg). Caja roja de esquinas redondeadas, franja negra con "MOTOCOMPO" en blanco,
+// faldón negro con rejillas, tapa superior negra, ruedas de 8" macizas; manubrio y asiento se despliegan.
+export function buildMotocompo() {
+  const g = new THREE.Group(), K = 1 / 1.185, R = 0xc6231b, D = 0x1b1b1b;
+  const L = 1.0, Hb = 0.4, y0 = 0.09, Wd = 0.24 * K;
+  const wx = [0.355, -0.355], wr = 0.09, wy = wr;
+  const bodyGeo = loft3({ x0: -0.5, x1: 0.5, p: 0.18, N: 220, M: 120,
+    top: [[-0.5, 0.25], [-0.497, 0.4], [-0.485, 0.455], [-0.45, 0.475], [0.42, 0.478], [0.47, 0.465], [0.493, 0.42], [0.5, 0.28]],
+    bot: archedBottom([[-0.5, 0.25], [-0.495, 0.14], [-0.47, 0.11], [0.47, 0.11], [0.495, 0.14], [0.5, 0.25]], { x: wx, y: wy }, wr * 1.22),
+    wid: [[-0.5, 0.06], [-0.49, 0.095], [-0.46, 0.102], [0.46, 0.102], [0.49, 0.095], [0.5, 0.06]] });
+  g.add(body3(bodyGeo, paint3(R, { hseams: [{ y: 0.4, x0: -0.48, x1: 0.48, zmin: 0.08 }] })));
+  // franja negra superior con "MOTOCOMPO" y faldón negro inferior
+  const band = canvasTex(1024, 64, (c, w, h) => { c.fillStyle = '#151515'; c.fillRect(0, 0, w, h); c.fillStyle = '#ffffff'; c.font = 'italic 900 46px Helvetica'; c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillText('MOTOCOMPO', 330, h / 2 + 2); });
+  for (const s of [-1, 1]) {
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(0.94, 0.05), new THREE.MeshStandardMaterial({ map: band, roughness: 0.5 }));
+    b.position.set(0, 0.36, s * 0.1035); if (s < 0) { b.rotation.y = Math.PI; b.scale.x = -1; b.rotation.y = Math.PI; b.scale.x = 1; } g.add(b);
+    const sk = new THREE.Mesh(new THREE.PlaneGeometry(0.94, 0.07), new THREE.MeshStandardMaterial({ color: D, roughness: 0.6 }));
+    sk.position.set(0, 0.2, s * 0.1033); if (s < 0) sk.rotation.y = Math.PI; g.add(sk);
+    for (let i = 0; i < 6; i++) g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.035, 0.003), mat(0x3a3a3a, 'matte')), -0.12 - i * 0.022, 0.2, s * 0.1045));
+    // rueda: aleta negra
+  }
+  g.add(at(part(rbox(0.86, 0.008, 0.16, 0.004), D, 'matte'), -0.01, 0.48, 0));                 // tapa superior negra
+  g.add(at(part(rbox(0.12, 0.012, 0.13, 0.004), 0x2a2a2a, 'matte'), 0.36, 0.486, 0));           // alojamiento del manubrio
+  // ruedas macizas de 8"
+  const ws = [];
+  for (const x of wx) { const w = tire3({ r: wr, w: 0.06, cap: 'flat', capColor: 0x222222 }); w.position.set(x, wy, 0); g.add(w); ws.push(w); }
+  // luz delantera y trasera
+  g.add(at(new THREE.Mesh(rbox(0.008, 0.035, 0.07, 0.006), new THREE.MeshPhysicalMaterial({ color: 0xfff6d8, emissive: 0xfff0c0, emissiveIntensity: 0.3, roughness: 0.05 })), 0.501, 0.42, 0));
+  g.add(at(new THREE.Mesh(rbox(0.008, 0.03, 0.06, 0.006), new THREE.MeshPhysicalMaterial({ color: 0xc81e1e, emissive: 0x5a0a0a, roughness: 0.1 })), -0.501, 0.43, 0));
+  // manubrio desplegable: caño negro, manillar, puños, faro y espejo
+  const bar = new THREE.Group(); bar.position.set(0.36, 0.49, 0); g.add(bar);
+  bar.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 0.46, 16), new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.4, metalness: 0.4 })), 0, 0.23, 0));
+  bar.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.36, 14), new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.4, metalness: 0.4 })), 0, 0.46, 0, Math.PI / 2));
+  for (const s of [-1, 1]) bar.add(at(part(new THREE.CylinderGeometry(0.014, 0.014, 0.09, 16), D, 'rubber'), 0, 0.46, s * 0.15, Math.PI / 2));
+  bar.add(at(part(rbox(0.05, 0.04, 0.06, 0.012), 0x222222, 'matte'), 0.02, 0.43, 0));
+  bar.add(at(new THREE.Mesh(rbox(0.006, 0.026, 0.045, 0.005), new THREE.MeshPhysicalMaterial({ color: 0xfff6d8, emissive: 0xfff0c0, emissiveIntensity: 0.4 })), 0.046, 0.43, 0));
+  // asiento desplegable
+  const seat = new THREE.Group(); seat.position.set(-0.3, 0.49, 0); g.add(seat);
+  seat.add(at(new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.2, 14), chromeMat()), 0, 0.1, 0));
+  seat.add(at(part(deform(rbox(0.22, 0.05, 0.13, 0.022, 4), (v) => { if (v.y > 0) v.y += 0.01 * (1 - (v.z / 0.065) ** 2); }), 0x1b1b1b, 'leather'), 0.0, 0.215, 0));
+  return root(g, (now, t, dt) => {
+    const k = smooth(0.6, 1.5, t);
+    bar.scale.y = 0.04 + 0.96 * k; bar.rotation.z = 0.12 * k;
+    seat.scale.y = 0.04 + 0.96 * smooth(1.0, 1.8, t);
+    ws.forEach((w) => (w.rotation.z -= 3 * dt * smooth(1.8, 2.2, t)));
+  });
+}
+
+// ---------- Mesa de ajedrez del Club Obrero (Ródchenko, París 1925; reconstrucción Van Abbemuseum) ----------
+// Dos sillones enfrentados, uno rojo y uno negro, con respaldo alto de listones verticales, apoyabrazos de bastidor
+// con barrotes y base de travesaños; en el medio la mesa: soporte trapezoidal (más ancho arriba) partido en diagonal
+// rojo/negro, tablero cuadrado rojo y negro que gira, y un cajón para las piezas. Piezas geométricas en bloques.
+export function buildClub() {
+  const g = new THREE.Group(), RO = 0xc4301c, NE = 0x141414;
+  const lac = (c) => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.35, clearcoat: 0.6, clearcoatRoughness: 0.2 });
+  const box = (w, h, d, c, x, y, z, rz = 0) => { const m = part(rbox(w, h, d, 0.004, 2), c, 'paint'); m.children[0].material = lac(c); return at(m, x, y, z, 0, 0, rz); };
+  // sillón: x hacia la mesa; respaldo del lado de afuera
+  function sillon(c, side) {
+    const s = new THREE.Group(); s.position.x = side * 0.62; s.rotation.y = side > 0 ? Math.PI : 0; g.add(s);
+    const S = 0.022;                                   // sección de los listones
+    const X0 = -0.22, X1 = 0.2, Z = 0.24;
+    // base: rectángulo en el piso + travesaños
+    for (const z of [-Z, Z]) { s.add(box(X1 - X0, S, S, c, (X0 + X1) / 2, S / 2, z)); s.add(box(X1 - X0, S, S, c, (X0 + X1) / 2, 0.16, z)); }
+    for (const x of [X0, X1]) { s.add(box(S, S, 2 * Z, c, x, S / 2, 0)); s.add(box(S, S, 2 * Z, c, x, 0.16, 0)); }
+    // patas
+    for (const x of [X0, X1]) for (const z of [-Z, Z]) s.add(box(S, x === X0 ? 0.98 : 0.56, S, c, x, (x === X0 ? 0.98 : 0.56) / 2, z));
+    // asiento
+    s.add(box(X1 - X0, 0.025, 2 * Z, c, (X0 + X1) / 2, 0.42, 0));
+    // apoyabrazos con barrotes
+    for (const z of [-Z, Z]) {
+      s.add(box(X1 - X0 + 0.03, S, S * 1.4, c, (X0 + X1) / 2 + 0.015, 0.56, z));
+      for (let i = 1; i <= 3; i++) s.add(box(S * 0.8, 0.13, S * 0.8, c, X0 + (X1 - X0) * i / 4, 0.49, z));
+      s.add(box(X1 - X0, S * 0.8, S * 0.8, c, (X0 + X1) / 2, 0.3, z));
+    }
+    // respaldo alto con listones verticales
+    s.add(box(S, S, 2 * Z, c, X0, 0.98, 0)); s.add(box(S, S, 2 * Z, c, X0, 0.62, 0));
+    for (let i = -2; i <= 2; i++) s.add(box(S * 0.8, 0.36, S * 0.9, c, X0, 0.8, i * 0.08));
+    return s;
+  }
+  sillon(RO, 1); sillon(NE, -1);
+  // base común: mitad roja, mitad negra
+  g.add(box(0.5, 0.012, 0.5, NE, -0.3, 0.006, 0)); g.add(box(0.5, 0.012, 0.5, RO, 0.3, 0.006, 0));
+  // soporte trapezoidal de la mesa (más ancho arriba), partido en diagonal rojo/negro
+  const trap = (c, pts) => {
+    const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); pts.slice(1).forEach(([x, y]) => sh.lineTo(x, y)); sh.closePath();
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: true, bevelSize: 0.004, bevelThickness: 0.004, bevelSegments: 1 }); geo.translate(0, 0, -0.15);
+    const m = part(geo, c, 'paint'); m.children[0].material = lac(c); g.add(m);
+  };
+  trap(NE, [[-0.1, 0.0], [0.0, 0.0], [-0.04, 0.66], [-0.22, 0.66]]);
+  trap(RO, [[0.0, 0.0], [0.1, 0.0], [0.22, 0.66], [-0.04, 0.66]]);
+  // cajón para las piezas, del lado rojo
+  g.add(box(0.1, 0.09, 0.3, RO, 0.2, 0.715, 0));
+  // tablero que gira (eje horizontal): 8×8 rojo y negro
+  const tex = canvasTex(256, 256, (c, w, h) => { for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { c.fillStyle = (i + j) % 2 ? '#141414' : '#c8361f'; c.fillRect(i * 32, j * 32, 32, 32); } });
+  const board = new THREE.Group(); board.position.set(-0.06, 0.69, 0); g.add(board);
+  board.add(box(0.33, 0.03, 0.33, NE, 0, 0, 0));
+  for (const sgn of [1, -1]) { const f = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.45 })); f.rotation.x = -sgn * Math.PI / 2; f.position.y = sgn * 0.0155; board.add(f); }
+  // piezas en bloques (dos filas por color)
+  const pieces = new THREE.Group(); board.add(pieces);
+  const cell = 0.3 / 8;
+  for (let i = 0; i < 8; i++) for (const [row, c] of [[0, NE], [1, NE], [6, RO], [7, RO]]) {
+    const tall = row === 0 || row === 7 ? [0.05, 0.04, 0.045, 0.06, 0.065, 0.045, 0.04, 0.05][i] : 0.03;
+    const p = new THREE.Group(); p.position.set(-0.15 + cell * (row + 0.5), 0.016, -0.15 + cell * (i + 0.5)); pieces.add(p);
+    p.add(at(box(cell * 0.7, tall * 0.6, cell * 0.7, c, 0, 0, 0), 0, tall * 0.3, 0));
+    p.add(at(box(cell * 0.45, tall * 0.4, cell * 0.45, c, 0, 0, 0), 0, tall * 0.8, 0));
+  }
+  return root(g, (now, t) => {
+    // el tablero da media vuelta a los 2 s y vuelve (como el original, que pivotea)
+    const ph = t % 8; const k = smooth(2, 3, ph) - smooth(6, 7, ph);
+    board.rotation.x = Math.PI * k; pieces.visible = k < 0.5;
   });
 }
