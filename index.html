@@ -15,13 +15,22 @@
   #start { background:var(--crudo); }
   #start h1 { font-size:44px; margin:0; letter-spacing:1px; font-weight:900; -webkit-text-stroke:1.5px var(--tinta); color:#fff; text-shadow:3px 3px 0 var(--tinta); }
   #start p { margin:0; max-width:300px; line-height:1.4; }
-  .thumbs img { width:240px; max-width:80vw; border:3px solid var(--tinta); border-radius:14px; transform:rotate(-2deg); }
+  #start { gap:16px; justify-content:safe center; overflow-y:auto; padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom)); }
+  #start h1 { font-size:40px; }
+  #start .para { font-size:18px; }
+  .pasos { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; width:100%; max-width:340px; }
+  .pasos li { display:flex; align-items:center; gap:12px; text-align:left; background:#fff; border:3px solid var(--tinta); border-radius:16px; box-shadow:4px 4px 0 var(--tinta); padding:10px 14px 10px 10px; }
+  .pasos .n { flex:none; width:30px; height:30px; border-radius:50%; background:var(--rojo); color:#fff; font-weight:900; font-size:18px; display:flex; align-items:center; justify-content:center; border:2.5px solid var(--tinta); }
+  .pasos svg { flex:none; width:44px; height:44px; fill:none; stroke:var(--tinta); stroke-width:3; stroke-linecap:round; stroke-linejoin:round; }
+  .pasos .t { font-size:16px; line-height:1.3; }
+  #start .alt { font-size:13px; opacity:.6; }
+  #start .alt a { color:inherit; }
   button { font:inherit; font-weight:800; font-size:20px; padding:14px 30px; border-radius:40px; border:3px solid var(--tinta); background:var(--rojo); color:#fff; box-shadow:4px 4px 0 var(--tinta); }
   button:active { transform:translate(3px,3px); box-shadow:1px 1px 0 var(--tinta); }
   #scan { pointer-events:none; display:none; }
   #scan .frame { width:62vmin; height:62vmin; border:3px dashed rgba(255,255,255,.85); border-radius:24px; display:flex; align-items:center; justify-content:center; }
   #scan .tip { color:#fff; background:rgba(0,0,0,.45); padding:8px 14px; border-radius:20px; font-weight:700; }
-  #card { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,140%); transition:transform .45s cubic-bezier(.2,1.4,.4,1); background:var(--crudo); border:3px solid var(--tinta); border-radius:18px; box-shadow:4px 4px 0 var(--tinta); padding:10px 18px; z-index:11; text-align:center; white-space:nowrap; }
+  #card { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translate(-50%,calc(100% + 80px)); transition:transform .45s cubic-bezier(.2,1.4,.4,1); background:var(--crudo); border:3px solid var(--tinta); border-radius:18px; box-shadow:4px 4px 0 var(--tinta); padding:10px 18px; z-index:11; text-align:center; white-space:nowrap; }
   #card.on { transform:translate(-50%,0); }
   #card b { font-size:22px; display:block; }
   #card span { font-size:14px; }
@@ -41,10 +50,20 @@
 
 <div id="start" class="ov">
   <h1>MANTHA AR</h1>
-  <div class="thumbs"><img src="zona_z1.jpg" alt=""></div>
-  <p>Apuntá la cámara a la capa: los dibujos se iluminan. <b>Tocá uno</b> y sale de la tela.</p>
+  <p class="para">Los dibujos de la capa <b>salen en 3D</b> en tu celu.</p>
+  <ol class="pasos">
+    <li><span class="n">1</span>
+      <svg viewBox="0 0 48 48"><rect x="5" y="13" width="38" height="27" rx="6"/><path d="M17 13l3-5h8l3 5"/><circle cx="24" cy="26.5" r="7"/></svg>
+      <span class="t">Tocá <b>Abrir cámara</b><br>y poné <b>Permitir</b></span></li>
+    <li><span class="n">2</span>
+      <svg viewBox="0 0 48 48"><rect x="15" y="4" width="18" height="30" rx="4"/><path d="M8 42l6-8M40 42l-6-8M8 42h32"/><path d="M21 9h6"/></svg>
+      <span class="t">Apuntá el celu<br>a <b>la capa</b></span></li>
+    <li><span class="n">3</span>
+      <svg viewBox="0 0 48 48"><path d="M20 26V9a3 3 0 0 1 6 0v12l9 2.5a3.5 3.5 0 0 1 2.5 4.2L35 40H19l-7-9a3 3 0 0 1 4.5-3.8z"/><path d="M10 10a10 10 0 0 1 4-5M36 10a10 10 0 0 0-4-5"/></svg>
+      <span class="t"><b>Tocá un dibujo</b>: sale en 3D.<br>Deslizá el dedo para girarlo</span></li>
+  </ol>
   <button id="go">Abrir cámara</button>
-  <p style="font-size:13px;opacity:.6">sin cámara: <a href="?preview=vespa" style="color:inherit">Vespa</a> · <a href="?preview=sk4" style="color:inherit">SK4</a> · <a href="?sim=zA" style="color:inherit">simular capa</a></p>
+  <p class="alt">sin cámara: <a href="?preview=vespa">Vespa</a> · <a href="?preview=sk4">SK4</a> · <a href="?sim=zA">simular capa</a></p>
 </div>
 
 <div id="scan" class="ov"><div class="frame"></div><div class="tip">Apuntá a los dibujos de la capa…</div></div>
