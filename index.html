@@ -52,7 +52,7 @@
 
 <script type="module">
 import * as THREE from 'three';
-import { buildVespa, addLights } from './vespa3d.js';
+import { buildVespa, setupRenderer } from './vespa3d.js';
 
 const $ = (id) => document.getElementById(id);
 const preview = new URLSearchParams(location.search).has('preview');
@@ -69,7 +69,7 @@ function animator(vespa, base) {
       const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2); // ease-out con rebote
       const s = base * (k === 0 ? 0.001 : back(k));
       vespa.scale.setScalar(s);
-      vespa.rotation.y = Math.sin(now / 1600) * 0.6;
+      vespa.rotation.y = Math.sin(now / 2200) * 0.55;
       vespa.position.y = base * 0.04 * Math.sin(now / 700);
       for (const w of vespa.children[0].userData.wheels) w.rotation.z -= 0.04;
     },
@@ -82,13 +82,13 @@ if (preview) {
   const r = new THREE.WebGLRenderer({ antialias: true });
   r.setPixelRatio(devicePixelRatio); r.setSize(innerWidth, innerHeight);
   r.setClearColor(0xefe8d8); $('ar').appendChild(r.domElement);
-  const scene = new THREE.Scene(); addLights(scene);
+  const scene = new THREE.Scene(); setupRenderer(r, scene);
   const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 50);
   cam.position.set(1.6, 1.1, 3.2);
-  const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.5, 0); ctl.update();
+  const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.5, 0); ctl.update(); window._view = { cam, ctl };
   const holder = new THREE.Group(); holder.add(buildVespa()); scene.add(holder);
   const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xe2d9c4 }));
-  floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -0.035; scene.add(floor);
   const a = animator(holder, 1); a.show();
   $('card').classList.add('on');
   addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
@@ -105,7 +105,7 @@ if (preview) {
       });
       const { renderer, scene, camera } = mind;
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-      addLights(scene);
+      setupRenderer(renderer, scene);
       const anchor = mind.addAnchor(0);
 
       // La imagen marcadora mide 1 unidad de ancho. La Vespa pintada está arriba-centro del recorte.
@@ -120,7 +120,7 @@ if (preview) {
         new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false }));
       sh.scale.set(1.5, 0.5, 1); sh.position.set(0, -0.12, 0.002); anchor.group.add(sh);
 
-      const a = animator(holder, 0.75);
+      const a = animator(holder, 0.62);
       anchor.onTargetFound = () => { a.show(); $('scan').style.display = 'none'; $('card').classList.add('on'); navigator.vibrate?.(30); };
       anchor.onTargetLost = () => { a.hide(); $('scan').style.display = 'flex'; $('card').classList.remove('on'); };
 
