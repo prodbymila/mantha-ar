@@ -56,7 +56,7 @@
 import * as THREE from 'three';
 import { buildVespa, setupRenderer } from './vespa3d.js?v=5';
 import { buildSK4 } from './sk4.js?v=5';
-import * as O from './objetos.js?v=6';
+import * as O from './objetos.js?v=7';
 
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
@@ -90,7 +90,7 @@ const OBJETOS = {
   vasija:     { build: O.buildVasija, title: 'Vasija de barro', sub: 'Técnica del artesano', tilt: 0.2 },
   yunque:     { build: O.buildYunque, title: 'Yunque del herrero', sub: 'Técnica del artesano', tilt: 0.3 },
   telarm:     { build: O.buildTelarManual, title: 'Telar manual', sub: 'Técnica del artesano', tilt: 0.15 },
-  telarmec:   { build: O.buildTelarMec, title: 'Telar mecánico', sub: 'Técnica del técnico · Revolución Industrial', tilt: 0.3 },
+  telarmec:   { build: O.buildWatt, title: 'Máquina de vapor', sub: 'James Watt 1769 · Técnica del técnico', tilt: 0.25 },
   crystal:    { build: O.buildCrystal, title: 'Crystal Palace', sub: 'Londres 1851 · Joseph Paxton', tilt: 0.45 },
   foco:       { build: O.buildFoco, title: 'Lamparita incandescente', sub: 'Edison 1879 · Técnica del técnico', tilt: 0.1 },
 };
