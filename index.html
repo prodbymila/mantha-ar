@@ -39,10 +39,10 @@
 
 <div id="start" class="ov">
   <h1>MANTHA AR</h1>
-  <div class="thumbs"><img src="target_zona1.jpg" alt=""></div>
+  <div class="thumbs"><img src="zona_z1.jpg" alt=""></div>
   <p>Apuntá la cámara a la capa: los dibujos se iluminan. <b>Tocá uno</b> y sale de la tela.</p>
   <button id="go">Abrir cámara</button>
-  <p style="font-size:13px;opacity:.6">sin cámara: <a href="?preview=vespa" style="color:inherit">Vespa</a> · <a href="?preview=sk4" style="color:inherit">SK4</a> · <a href="?sim" style="color:inherit">simular capa</a></p>
+  <p style="font-size:13px;opacity:.6">sin cámara: <a href="?preview=vespa" style="color:inherit">Vespa</a> · <a href="?preview=sk4" style="color:inherit">SK4</a> · <a href="?sim=zA" style="color:inherit">simular capa</a></p>
 </div>
 
 <div id="scan" class="ov"><div class="frame"></div><div class="tip">Apuntá a los dibujos de la capa…</div></div>
@@ -52,27 +52,50 @@
 
 <script type="module">
 import * as THREE from 'three';
-import { buildVespa, setupRenderer } from './vespa3d.js?v=4';
-import { buildSK4 } from './sk4.js?v=4';
+import { buildVespa, setupRenderer } from './vespa3d.js?v=5';
+import { buildSK4 } from './sk4.js?v=5';
+import * as O from './objetos.js?v=5';
 
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 
-// Objetos 3D. scale/yoff/z en unidades del marcador (ancho del marcador = 1).
+// Objetos 3D: título, ficha e inclinación hacia quien mira (para ver la parte de arriba).
 const OBJETOS = {
-  vespa: { build: buildVespa, title: 'Vespa 98', sub: "Piaggio · Italia 1946 · Corradino D'Ascanio",
-           scale: 0.34, tilt: 0, sway: 0.55, yoff: -0.17, z: 0.2 },
-  sk4:   { build: buildSK4, title: 'Braun SK4', sub: 'Alemania 1956 · Dieter Rams y Hans Gugelot',
-           scale: 0.36, tilt: 0.55, sway: 0.35, yoff: -0.08, z: 0.18 },
+  lamp:       { build: O.buildLamp, title: 'Lámpara WG24', sub: 'Bauhaus 1923 · Wagenfeld y Jucker', tilt: 0.2 },
+  b3:         { build: O.buildB3, title: 'Silla B3', sub: 'Bauhaus 1925 · Marcel Breuer', tilt: 0.3 },
+  club:       { build: O.buildClub, title: 'Club Obrero', sub: 'París 1925 · Aleksandr Ródchenko', tilt: 0.45 },
+  tatlin:     { build: O.buildTatlin, title: 'Silla de Tatlin', sub: 'Moscú 1927 · Tatlin y Rogozhin', tilt: 0.25 },
+  molino:     { build: O.buildMolino, title: 'Molinos Minetti', sub: 'Córdoba 1918', tilt: 0.25 },
+  fma:        { build: O.buildFMA, title: 'Fábrica Militar de Aviones', sub: 'Córdoba 1927', tilt: 0.4 },
+  bkf:        { build: O.buildBKF, title: 'Silla BKF', sub: '1938 · Grupo Austral', tilt: 0.35 },
+  vespa:      { build: buildVespa, title: 'Vespa 98', sub: "Piaggio · Italia 1946 · Corradino D'Ascanio", tilt: 0, sway: 0.55 },
+  eames:      { build: O.buildEames, title: 'Silla Eames', sub: 'EE.UU. 1950 · Charles y Ray Eames', tilt: 0.3 },
+  sk4:        { build: buildSK4, title: 'Braun SK4', sub: 'Alemania 1956 · Dieter Rams y Hans Gugelot', tilt: 0.55 },
+  r360:       { build: O.buildR360, title: 'Mazda R360 Coupé', sub: 'Japón 1960 · Tsuneji Matsuda', tilt: 0.15, sway: 0.55 },
+  walkman:    { build: O.buildWalkman, title: 'Walkman TPS-L2', sub: 'Sony 1979 · Ibuka y Morita', tilt: 0.15 },
+  rastrojero: { build: O.buildRastrojero, title: 'Rastrojero', sub: 'IAME · Córdoba 1952', tilt: 0.15, sway: 0.55 },
+  ika:        { build: O.buildEstanciera, title: 'IKA Estanciera', sub: 'Córdoba 1957', tilt: 0.15, sway: 0.55 },
+  magiclick:  { build: O.buildMagiclick, title: 'Magiclick', sub: 'Aurora 1968 · encendedor piezoeléctrico', tilt: 0.1 },
+  motocompo:  { build: O.buildMotocompo, title: 'Motocompo', sub: 'Honda 1981', tilt: 0.15, sway: 0.5 },
+  imac:       { build: O.buildIMac, title: 'iMac G3', sub: 'Apple 1998 · Jonathan Ive', tilt: 0.15 },
+  gba:        { build: O.buildGBA, title: 'Game Boy Advance', sub: 'Nintendo 2001', tilt: 0.1 },
+  r12:        { build: O.buildR12, title: 'Renault 12', sub: 'Gaston Juchet 1969 · IKA-Renault Córdoba 1971–94', tilt: 0.15, sway: 0.55 },
+  espalditas: { build: O.buildEspalditas, title: 'Espalditas', sub: 'Diana Cabeza 2017 · Planetario de Buenos Aires', tilt: 0.3 },
 };
 
-// Zonas = marcadores (orden de zonas.mind). Cada dibujo: centro y tamaño dentro del marcador.
-const ZONAS = [
-  { img: 'target_zona1.jpg', aspect: 613 / 800, dibujos: [
-    { obj: 'vespa', cx: -0.194, cy: 0.161, w: 0.2625, h: 0.275 },
-    { obj: 'sk4',   cx: 0.059,  cy: -0.044, w: 0.281, h: 0.284 },
-  ] },
-];
+// Zonas = marcadores (orden de zonas.mind). capa.json tiene, en píxeles de la foto de la capa extendida,
+// el rectángulo de cada zona y la caja de cada dibujo. Cada zona muestra los dibujos que caen en ella
+// o cerca (aunque se salgan del recorte): así da igual qué zona reconozca la cámara.
+const CAPA = await (await fetch('./capa.json?v=5')).json();
+const MARGEN = 260;
+const ZONAS = CAPA.zonas.map(([id, x0, y0, x1, y1]) => {
+  const W = x1 - x0, cx0 = (x0 + x1) / 2, cy0 = (y0 + y1) / 2;
+  const dibujos = Object.entries(CAPA.dibujos).filter(([k, [a, b, c, d]]) => {
+    const mx = (a + c) / 2, my = (b + d) / 2;
+    return OBJETOS[k] && mx > x0 - MARGEN && mx < x1 + MARGEN && my > y0 - MARGEN && my < y1 + MARGEN;
+  }).map(([k, [a, b, c, d]]) => ({ obj: k, cx: ((a + c) / 2 - cx0) / W, cy: (cy0 - (b + d) / 2) / W, w: (c - a) / W, h: (d - b) / W }));
+  return { id, img: `zona_${id}.jpg`, aspect: (y1 - y0) / W, dibujos };
+});
 
 function showCard(o) {
   if (o) { $('ct').textContent = o.title; $('cs').textContent = o.sub; }
@@ -80,24 +103,30 @@ function showCard(o) {
 }
 
 // ---------- modelo que sale de la tela ----------
-function mount(o) {
+function mount(o, fitW) {
   const holder = new THREE.Group(), spin = new THREE.Group(), model = o.build();
-  holder.rotation.x = o.tilt; spin.add(model); holder.add(spin);
+  // centrar el modelo y escalarlo para que mida ~2 veces el dibujo (con tope, para no tapar todo)
+  const box = new THREE.Box3().setFromObject(model), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  model.position.sub(c);
+  const big = Math.max(size.x, size.y * 1.2);
+  const base = fitW ? Math.min((1.9 * fitW) / big, 0.55 / Math.max(size.x, size.y, size.z)) : 1;
+  holder.rotation.x = o.tilt || 0; spin.add(model); holder.add(spin);
+  holder.userData.depth = size.z * base;
   let t0 = null, visible = false, last = performance.now(), cur = 0;
   const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2); // ease-out con rebote
   return {
-    holder,
+    holder, base,
     get visible() { return visible; },
     show() { visible = true; t0 = performance.now(); model.userData.reset?.(); },
     hide() { visible = false; },
-    tick(now, base) {
+    tick(now) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       const t = t0 ? (now - t0) / 1000 : 0;
       cur = visible ? back(Math.min(1, t / 0.9)) : Math.max(0, cur - dt * 6);   // al ocultar se achica
       holder.visible = cur > 0.002;
       spin.scale.setScalar(base * Math.max(cur, 0.001));
-      spin.rotation.y = Math.sin(now / 2200) * o.sway;
-      spin.position.y = base * 0.04 * Math.sin(now / 700);
+      spin.rotation.y = Math.sin(now / 2200) * (o.sway ?? 0.4);
+      spin.position.y = base * 0.03 * Math.sin(now / 700);
       if (visible) model.userData.update?.(now, t, dt);
     },
   };
@@ -118,16 +147,21 @@ function glassMaterial(w, h) {
         vec2 p = (vUv - 0.5) * full;
         float d = sdRound(p, uSize * 0.5, 0.035);
         float inside = 1.0 - smoothstep(-0.002, 0.002, d);
-        float fill = inside * (0.10 + 0.08 * (1.0 - vUv.y));                  // vidrio esmerilado, más claro abajo
-        float border = 1.0 - smoothstep(0.0025, 0.0055, abs(d));               // canto
-        float glow = (1.0 - inside) * exp(-max(d, 0.0) * 55.0) * 0.45;        // halo exterior
+        float fill = inside * (0.14 + 0.1 * (1.0 - vUv.y));                  // vidrio esmerilado, más claro abajo
+        float border = 1.0 - smoothstep(0.003, 0.0065, abs(d));               // canto
+        float glow = (1.0 - inside) * exp(-max(d, 0.0) * 55.0) * 0.35;        // halo exterior
+        float shadow = (1.0 - smoothstep(0.004, 0.022, d)) * smoothstep(0.002, 0.007, d); // sombra que lo despega de la tela
         float k = mod(uTime * 0.28, 1.6) - 0.3;                                // reflejo que barre en diagonal
         float s = (p.x / full.x + p.y / full.y * 0.7) - (k * 2.0 - 1.0);
-        float sheen = inside * (1.0 - smoothstep(0.0, 0.07, abs(s))) * 0.35;
+        float sheen = inside * (1.0 - smoothstep(0.0, 0.07, abs(s))) * 0.4;
         float pulse = 0.8 + 0.2 * sin(uTime * 3.0);
         vec3 col = mix(vec3(1.0), vec3(0.95, 0.27, 0.36), uSel);
-        float a = (fill * (1.0 - 0.6 * uSel) + border * 0.95 * pulse + glow * (0.6 + uSel) + sheen) * uOn * (1.0 - 0.65 * uDim);
-        gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
+        float fade = uOn * (1.0 - 0.65 * uDim);
+        float wa = clamp(fill * (1.0 - 0.6 * uSel) + border * pulse + glow * (0.5 + uSel) + sheen, 0.0, 1.0) * fade;
+        float da = shadow * 0.45 * fade;
+        float a = wa + da * (1.0 - wa);
+        vec3 rgb = (col * wa + vec3(0.04, 0.04, 0.06) * da * (1.0 - wa)) / max(a, 0.001);
+        gl_FragColor = vec4(rgb, a);
       }`,
   });
 }
@@ -138,7 +172,7 @@ function buildZone(zona, group) {
     const o = OBJETOS[d.obj];
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(d.w + 2 * PAD, d.h + 2 * PAD), glassMaterial(d.w, d.h));
     mesh.position.set(d.cx, d.cy, 0.004); mesh.userData.d = d; group.add(mesh);
-    const m = mount(o); m.holder.position.set(d.cx, d.cy + o.yoff, o.z); group.add(m.holder);
+    const m = mount(o, d.w); m.holder.position.set(d.cx, d.cy, 0.08 + m.holder.userData.depth / 2); group.add(m.holder);
     return { d, o, mesh, m };
   });
   let on = false, sel = null, tOn = 0;
@@ -158,7 +192,7 @@ function buildZone(zona, group) {
         u.uTime.value = now / 1000; u.uOn.value = tOn;
         u.uSel.value += ((sel === it ? 1 : 0) - u.uSel.value) * 0.15;
         u.uDim.value += ((sel && sel !== it ? 1 : 0) - u.uDim.value) * 0.15;
-        it.m.tick(now, it.o.scale);
+        it.m.tick(now);
       }
     },
   };
@@ -204,12 +238,12 @@ if (qs.has('preview')) {
   const cam = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.01, 50);
   cam.position.set(1.6, 1.3, 3.2);
   const ctl = new OrbitControls(cam, r.domElement); ctl.target.set(0, 0.4, 0); ctl.update(); window._view = { cam, ctl };
-  const m = mount({ ...o, tilt: 0 }); scene.add(m.holder); m.show();
+  const m = mount({ ...o, tilt: 0 }); m.holder.position.y = 0.45; scene.add(m.holder); m.show();
   const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xe2d9c4 }));
   floor.rotation.x = -Math.PI / 2; floor.position.y = -0.035; scene.add(floor);
   showCard(o);
   addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
-  r.setAnimationLoop((now) => { m.tick(now, 1); r.render(scene, cam); });
+  r.setAnimationLoop((now) => { m.tick(now); r.render(scene, cam); });
 } else if (qs.has('sim')) {
   // simulación: la foto de la capa como si fuera la cámara, para probar los toques
   $('start').style.display = 'none';
@@ -219,7 +253,7 @@ if (qs.has('preview')) {
   const scene = new THREE.Scene(); setupRenderer(r, scene);
   const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 50);
   cam.position.set(0.15, -0.35, 1.25); cam.lookAt(0, 0, 0);
-  const zona = ZONAS[0], group = new THREE.Group(); scene.add(group);
+  const zona = ZONAS.find((z) => z.id === qs.get('sim')) || ZONAS[0], group = new THREE.Group(); scene.add(group);
   const tex = new THREE.TextureLoader().load(zona.img); tex.encoding = THREE.sRGBEncoding;
   group.add(new THREE.Mesh(new THREE.PlaneGeometry(1, zona.aspect), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
   const z = buildZone(zona, group); z.found(); window._zone = z;
@@ -232,7 +266,7 @@ if (qs.has('preview')) {
     try {
       const { MindARThree } = await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
       const mind = new MindARThree({
-        container: $('ar'), imageTargetSrc: './zonas.mind?v=4', maxTrack: 1,
+        container: $('ar'), imageTargetSrc: './zonas.mind?v=5', maxTrack: 1,
         uiLoading: 'no', uiScanning: 'no', uiError: 'no',
         filterMinCF: 0.0001, filterBeta: 0.001, missTolerance: 10, warmupTolerance: 3,
       });

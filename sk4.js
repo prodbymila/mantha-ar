@@ -2,7 +2,7 @@
 // Chapa blanca en U, laterales de madera, tapa de acrílico transparente.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { mat, part, smooth } from './vespa3d.js?v=4';
+import { mat, part, smooth } from './vespa3d.js?v=5';
 
 const BLANCO = 0xf2f0ea, GRIS_DECK = 0xd9d7d1, GRIS = 0xb9b6b0, OSCURO = 0x3a3a3c, NEGRO = 0x161616, MADERA = 0x86562a, ROJO = 0xb8243a;
 
