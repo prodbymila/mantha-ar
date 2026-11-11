@@ -13,9 +13,7 @@
   #start { background:var(--crudo); }
   #start h1 { font-size:44px; margin:0; letter-spacing:1px; font-weight:900; -webkit-text-stroke:1.5px var(--tinta); color:#fff; text-shadow:3px 3px 0 var(--tinta); }
   #start p { margin:0; max-width:300px; line-height:1.4; }
-  .thumbs { display:flex; gap:12px; }
-  .thumbs img { width:130px; border:3px solid var(--tinta); border-radius:14px; transform:rotate(-3deg); }
-  .thumbs img + img { transform:rotate(3deg); }
+  .thumbs img { width:240px; max-width:80vw; border:3px solid var(--tinta); border-radius:14px; transform:rotate(-2deg); }
   button { font:inherit; font-weight:800; font-size:20px; padding:14px 30px; border-radius:40px; border:3px solid var(--tinta); background:var(--rojo); color:#fff; box-shadow:4px 4px 0 var(--tinta); }
   button:active { transform:translate(3px,3px); box-shadow:1px 1px 0 var(--tinta); }
   #scan { pointer-events:none; display:none; }
@@ -26,6 +24,8 @@
   #card b { font-size:22px; display:block; }
   #card span { font-size:14px; }
   #err { display:none; background:var(--crudo); }
+  #hint { position:fixed; left:50%; bottom:calc(32px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:11; color:#fff; font-weight:800; padding:10px 18px; border-radius:24px;
+    background:rgba(255,255,255,.16); border:1.5px solid rgba(255,255,255,.7); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); display:none; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.4); }
 </style>
 <script type="importmap">
 { "imports": {
@@ -39,55 +39,63 @@
 
 <div id="start" class="ov">
   <h1>MANTHA AR</h1>
-  <div class="thumbs"><img src="target_vespa.jpg" alt=""><img src="target_sk4.jpg" alt=""></div>
-  <p>Apuntá la cámara a la <b>Vespa</b> o al <b>Braun SK4</b> de la capa y mirá cómo salen de la tela.</p>
+  <div class="thumbs"><img src="target_zona1.jpg" alt=""></div>
+  <p>Apuntá la cámara a la capa: los dibujos se iluminan. <b>Tocá uno</b> y sale de la tela.</p>
   <button id="go">Abrir cámara</button>
-  <p style="font-size:13px;opacity:.6">ver sin cámara: <a href="?preview=vespa" style="color:inherit">Vespa</a> · <a href="?preview=sk4" style="color:inherit">SK4</a></p>
+  <p style="font-size:13px;opacity:.6">sin cámara: <a href="?preview=vespa" style="color:inherit">Vespa</a> · <a href="?preview=sk4" style="color:inherit">SK4</a> · <a href="?sim" style="color:inherit">simular capa</a></p>
 </div>
 
-<div id="scan" class="ov"><div class="frame"></div><div class="tip">Apuntá a la Vespa o al SK4…</div></div>
-
+<div id="scan" class="ov"><div class="frame"></div><div class="tip">Apuntá a los dibujos de la capa…</div></div>
+<div id="hint">Tocá un dibujo</div>
 <div id="card"><b id="ct"></b><span id="cs"></span></div>
-
 <div id="err" class="ov"><p id="errmsg"></p><button onclick="location.reload()">Reintentar</button></div>
 
 <script type="module">
 import * as THREE from 'three';
-import { buildVespa, setupRenderer } from './vespa3d.js?v=3';
-import { buildSK4 } from './sk4.js?v=3';
+import { buildVespa, setupRenderer } from './vespa3d.js?v=4';
+import { buildSK4 } from './sk4.js?v=4';
 
 const $ = (id) => document.getElementById(id);
 const qs = new URLSearchParams(location.search);
 
-// Cada objeto: su marcador (mismo orden que en targets.mind), dónde está el dibujo dentro del
-// marcador (la imagen mide 1 de ancho, centro = 0,0) y cómo sale de la tela.
-const OBJETOS = [
-  { id: 'vespa', build: buildVespa, title: 'Vespa 98', sub: "Piaggio · Italia 1946 · Corradino D'Ascanio",
-    pos: [-0.06, 0.12, 0.35], tilt: 0, scale: 0.62, sway: 0.55, shadow: [0.45, -0.1] },
-  { id: 'sk4', build: buildSK4, title: 'Braun SK4', sub: 'Alemania 1956 · Dieter Rams y Hans Gugelot',
-    pos: [-0.2, -0.02, 0.3], tilt: 0.55, scale: 0.58, sway: 0.35, shadow: [0.4, -0.12] },
+// Objetos 3D. scale/yoff/z en unidades del marcador (ancho del marcador = 1).
+const OBJETOS = {
+  vespa: { build: buildVespa, title: 'Vespa 98', sub: "Piaggio · Italia 1946 · Corradino D'Ascanio",
+           scale: 0.34, tilt: 0, sway: 0.55, yoff: -0.17, z: 0.2 },
+  sk4:   { build: buildSK4, title: 'Braun SK4', sub: 'Alemania 1956 · Dieter Rams y Hans Gugelot',
+           scale: 0.36, tilt: 0.55, sway: 0.35, yoff: -0.08, z: 0.18 },
+};
+
+// Zonas = marcadores (orden de zonas.mind). Cada dibujo: centro y tamaño dentro del marcador.
+const ZONAS = [
+  { img: 'target_zona1.jpg', aspect: 613 / 800, dibujos: [
+    { obj: 'vespa', cx: -0.194, cy: 0.161, w: 0.2625, h: 0.275 },
+    { obj: 'sk4',   cx: 0.059,  cy: -0.044, w: 0.281, h: 0.284 },
+  ] },
 ];
 
-function showCard(o, on) {
-  if (on) { $('ct').textContent = o.title; $('cs').textContent = o.sub; }
-  $('card').classList.toggle('on', on);
+function showCard(o) {
+  if (o) { $('ct').textContent = o.title; $('cs').textContent = o.sub; }
+  $('card').classList.toggle('on', !!o);
 }
 
-// holder (posición e inclinación) → spin (escala, vaivén, flote) → modelo
+// ---------- modelo que sale de la tela ----------
 function mount(o) {
   const holder = new THREE.Group(), spin = new THREE.Group(), model = o.build();
   holder.rotation.x = o.tilt; spin.add(model); holder.add(spin);
-  let t0 = null, visible = false, last = performance.now();
+  let t0 = null, visible = false, last = performance.now(), cur = 0;
   const back = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2); // ease-out con rebote
   return {
     holder,
+    get visible() { return visible; },
     show() { visible = true; t0 = performance.now(); model.userData.reset?.(); },
     hide() { visible = false; },
     tick(now, base) {
       const dt = Math.min(0.05, (now - last) / 1000); last = now;
       const t = t0 ? (now - t0) / 1000 : 0;
-      const k = visible ? Math.min(1, t / 0.9) : 0;
-      spin.scale.setScalar(base * (k === 0 ? 0.001 : back(k)));
+      cur = visible ? back(Math.min(1, t / 0.9)) : Math.max(0, cur - dt * 6);   // al ocultar se achica
+      holder.visible = cur > 0.002;
+      spin.scale.setScalar(base * Math.max(cur, 0.001));
       spin.rotation.y = Math.sin(now / 2200) * o.sway;
       spin.position.y = base * 0.04 * Math.sin(now / 700);
       if (visible) model.userData.update?.(now, t, dt);
@@ -95,9 +103,99 @@ function mount(o) {
   };
 }
 
+// ---------- recuadro glassy sobre cada dibujo ----------
+const PAD = 0.035;
+function glassMaterial(w, h) {
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    uniforms: { uSize: { value: new THREE.Vector2(w, h) }, uTime: { value: 0 }, uSel: { value: 0 }, uDim: { value: 0 }, uOn: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `
+      uniform vec2 uSize; uniform float uTime, uSel, uDim, uOn; varying vec2 vUv;
+      float sdRound(vec2 p, vec2 b, float r){ vec2 q = abs(p) - b + r; return length(max(q,0.0)) + min(max(q.x,q.y),0.0) - r; }
+      void main(){
+        vec2 full = uSize + 2.0 * ${PAD.toFixed(3)};
+        vec2 p = (vUv - 0.5) * full;
+        float d = sdRound(p, uSize * 0.5, 0.035);
+        float inside = 1.0 - smoothstep(-0.002, 0.002, d);
+        float fill = inside * (0.10 + 0.08 * (1.0 - vUv.y));                  // vidrio esmerilado, más claro abajo
+        float border = 1.0 - smoothstep(0.0025, 0.0055, abs(d));               // canto
+        float glow = (1.0 - inside) * exp(-max(d, 0.0) * 55.0) * 0.45;        // halo exterior
+        float k = mod(uTime * 0.28, 1.6) - 0.3;                                // reflejo que barre en diagonal
+        float s = (p.x / full.x + p.y / full.y * 0.7) - (k * 2.0 - 1.0);
+        float sheen = inside * (1.0 - smoothstep(0.0, 0.07, abs(s))) * 0.35;
+        float pulse = 0.8 + 0.2 * sin(uTime * 3.0);
+        vec3 col = mix(vec3(1.0), vec3(0.95, 0.27, 0.36), uSel);
+        float a = (fill * (1.0 - 0.6 * uSel) + border * 0.95 * pulse + glow * (0.6 + uSel) + sheen) * uOn * (1.0 - 0.65 * uDim);
+        gl_FragColor = vec4(col, clamp(a, 0.0, 1.0));
+      }`,
+  });
+}
+
+// Arma una zona dentro de un grupo anclado al marcador. Devuelve su lógica.
+function buildZone(zona, group) {
+  const items = zona.dibujos.map((d) => {
+    const o = OBJETOS[d.obj];
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(d.w + 2 * PAD, d.h + 2 * PAD), glassMaterial(d.w, d.h));
+    mesh.position.set(d.cx, d.cy, 0.004); mesh.userData.d = d; group.add(mesh);
+    const m = mount(o); m.holder.position.set(d.cx, d.cy + o.yoff, o.z); group.add(m.holder);
+    return { d, o, mesh, m };
+  });
+  let on = false, sel = null, tOn = 0;
+  const api = {
+    items,
+    found() { on = true; if (sel) sel.m.show(); updateUI(); },
+    lost() { on = false; items.forEach((it) => it.m.hide()); updateUI(); },
+    select(it) {
+      if (sel === it) { it.m.hide(); sel = null; }
+      else { if (sel) sel.m.hide(); sel = it; it.m.show(); navigator.vibrate?.(20); }
+      updateUI();
+    },
+    tick(now) {
+      tOn += ((on ? 1 : 0) - tOn) * 0.15;
+      for (const it of items) {
+        const u = it.mesh.material.uniforms;
+        u.uTime.value = now / 1000; u.uOn.value = tOn;
+        u.uSel.value += ((sel === it ? 1 : 0) - u.uSel.value) * 0.15;
+        u.uDim.value += ((sel && sel !== it ? 1 : 0) - u.uDim.value) * 0.15;
+        it.m.tick(now, it.o.scale);
+      }
+    },
+  };
+  function updateUI() {
+    showCard(on && sel ? sel.o : null);
+    $('hint').style.display = on && !sel ? 'block' : 'none';
+  }
+  return api;
+}
+
+// Toque: raycast contra los recuadros; si dos se pisan gana el más cercano a su centro.
+function enableTap(dom, camera, zonas) {
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  let down = null;
+  addEventListener('pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+  addEventListener('pointerup', (e) => {
+    if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 12) return;
+    const r = dom.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    let best = null;
+    for (const z of zonas) for (const it of z.items) {
+      if (!it.mesh.material.uniforms.uOn.value || it.mesh.material.uniforms.uOn.value < 0.5) continue;
+      const hit = ray.intersectObject(it.mesh)[0];
+      if (!hit) continue;
+      const lp = it.mesh.worldToLocal(hit.point.clone());
+      const score = Math.max(Math.abs(lp.x) / it.d.w, Math.abs(lp.y) / it.d.h);
+      if (!best || score < best.score) best = { z, it, score };
+    }
+    if (best) best.z.select(best.it);
+  });
+}
+
 if (qs.has('preview')) {
+  // ver un objeto suelto, sin cámara
   $('start').style.display = 'none';
-  const o = OBJETOS.find((x) => x.id === qs.get('preview')) || OBJETOS[0];
+  const id = OBJETOS[qs.get('preview')] ? qs.get('preview') : 'vespa', o = OBJETOS[id];
   const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
   const r = new THREE.WebGLRenderer({ antialias: true });
   r.setPixelRatio(devicePixelRatio); r.setSize(innerWidth, innerHeight);
@@ -109,39 +207,48 @@ if (qs.has('preview')) {
   const m = mount({ ...o, tilt: 0 }); scene.add(m.holder); m.show();
   const floor = new THREE.Mesh(new THREE.CircleGeometry(1.4, 48), new THREE.MeshBasicMaterial({ color: 0xe2d9c4 }));
   floor.rotation.x = -Math.PI / 2; floor.position.y = -0.035; scene.add(floor);
-  showCard(o, true);
+  showCard(o);
   addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
   r.setAnimationLoop((now) => { m.tick(now, 1); r.render(scene, cam); });
+} else if (qs.has('sim')) {
+  // simulación: la foto de la capa como si fuera la cámara, para probar los toques
+  $('start').style.display = 'none';
+  const r = new THREE.WebGLRenderer({ antialias: true });
+  r.setPixelRatio(devicePixelRatio); r.setSize(innerWidth, innerHeight); r.setClearColor(0x222222);
+  $('ar').appendChild(r.domElement);
+  const scene = new THREE.Scene(); setupRenderer(r, scene);
+  const cam = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 50);
+  cam.position.set(0.15, -0.35, 1.25); cam.lookAt(0, 0, 0);
+  const zona = ZONAS[0], group = new THREE.Group(); scene.add(group);
+  const tex = new THREE.TextureLoader().load(zona.img); tex.encoding = THREE.sRGBEncoding;
+  group.add(new THREE.Mesh(new THREE.PlaneGeometry(1, zona.aspect), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false })));
+  const z = buildZone(zona, group); z.found(); window._zone = z;
+  enableTap(r.domElement, cam, [z]);
+  addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
+  r.setAnimationLoop((now) => { z.tick(now); r.render(scene, cam); });
 } else {
   $('go').onclick = async () => {
     $('go').disabled = true; $('go').textContent = 'Cargando…';
     try {
       const { MindARThree } = await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js');
       const mind = new MindARThree({
-        container: $('ar'), imageTargetSrc: './targets.mind?v=3', maxTrack: 1,
+        container: $('ar'), imageTargetSrc: './zonas.mind?v=4', maxTrack: 1,
         uiLoading: 'no', uiScanning: 'no', uiError: 'no',
-        filterMinCF: 0.0001, filterBeta: 0.001, missTolerance: 8, warmupTolerance: 3,
+        filterMinCF: 0.0001, filterBeta: 0.001, missTolerance: 10, warmupTolerance: 3,
       });
       const { renderer, scene, camera } = mind;
       renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
       setupRenderer(renderer, scene);
-
-      const mounted = OBJETOS.map((o, i) => {
-        const anchor = mind.addAnchor(i), m = mount(o);
-        m.holder.position.set(...o.pos);
-        anchor.group.add(m.holder);
-        // sombra suave sobre la tela
-        const sh = new THREE.Mesh(new THREE.CircleGeometry(o.shadow[0], 40),
-          new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false }));
-        sh.scale.set(1.4, 0.5, 1); sh.position.set(o.pos[0], o.pos[1] + o.shadow[1], 0.002); anchor.group.add(sh);
-        anchor.onTargetFound = () => { m.show(); $('scan').style.display = 'none'; showCard(o, true); navigator.vibrate?.(30); };
-        anchor.onTargetLost = () => { m.hide(); $('scan').style.display = 'flex'; showCard(o, false); };
-        return m;
+      const zonas = ZONAS.map((zona, i) => {
+        const anchor = mind.addAnchor(i), z = buildZone(zona, anchor.group);
+        anchor.onTargetFound = () => { z.found(); $('scan').style.display = 'none'; };
+        anchor.onTargetLost = () => { z.lost(); $('scan').style.display = 'flex'; };
+        return z;
       });
-
+      enableTap(renderer.domElement, camera, zonas);
       await mind.start();
       $('start').style.display = 'none'; $('scan').style.display = 'flex';
-      renderer.setAnimationLoop((now) => { for (let i = 0; i < mounted.length; i++) mounted[i].tick(now, OBJETOS[i].scale); renderer.render(scene, camera); });
+      renderer.setAnimationLoop((now) => { zonas.forEach((z) => z.tick(now)); renderer.render(scene, camera); });
     } catch (e) {
       console.error(e);
       $('start').style.display = 'none'; $('err').style.display = 'flex';
